@@ -499,6 +499,11 @@ async function startKamera(videoId) {
         });
         const vid = document.getElementById(videoId);
         vid.srcObject = mediaStream;
+        
+        // Force no-mirror — override browser default
+        vid.style.transform = 'none';
+        vid.style.webkitTransform = 'none';
+        
         await vid.play().catch(() => {});
     } catch(e) {
         toast("❌ Kamera tidak bisa diakses: " + e.message);
@@ -528,12 +533,14 @@ function toggleFlashMode() {
         : "bg-[#1A1A1A] border border-gray-700 text-[#E5C158] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider active:scale-95 transition";
 }
 
+// GANTI fungsi doFlash() yang lama dengan ini:
 async function doFlash() {
     if (!flashModeOn) return;
-    const el = document.getElementById('screen-flash');
-    el.style.opacity = '1';
+    // Pakai flash-overlay yang full-screen (sudah ada di HTML)
+    const el = document.getElementById('flash-overlay');
+    el.classList.add('flash-on');
     await tunggu(80);
-    el.style.opacity = '0';
+    el.classList.remove('flash-on');
 }
 
 // ================================================================
