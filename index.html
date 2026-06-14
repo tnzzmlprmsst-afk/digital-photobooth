@@ -87,8 +87,8 @@
             animation: scanMove 2s linear infinite;
         }
 
-        /* Video: NO mirror on any page */
-        video { transform: none !important; }
+        /* Video: diatur via JS sesuai facingMode */
+        video { transform: none; }
 
         /* Ornamen */
         .orn { position: absolute; width: 96px; opacity: 0.15; pointer-events: none; z-index: 0; }
@@ -462,10 +462,15 @@ async function pindahHalamn_safe(dari, ke) {
         facingMode = "user";
         await startKamera('video-scan');
     } else if (ke === 'sesi-potret') {
-        facingMode = "user";
-        countPotret = 0;
-        updateCounter();
-        document.getElementById('potret-preview').innerHTML = '<span class="text-gray-500 text-xs flex items-center justify-center h-full">🖼</span>';
+        // Hanya reset counter & preview kalau ini sesi baru (dari scan-face)
+        // Kalau balik dari galeri, pertahankan counter & preview
+        const sesiBaruDari = ['scan-face', 'registrasi'];
+        if (sesiBaruDari.includes(dari)) {
+            facingMode = "user";
+            countPotret = 0;
+            updateCounter();
+            document.getElementById('potret-preview').innerHTML = '<span class="text-gray-500 text-xs flex items-center justify-center h-full">🖼</span>';
+        }
         await startKamera('video-potret');
     } else if (ke === 'gallery') {
         ambilGaleri();
@@ -499,15 +504,35 @@ async function startKamera(videoId) {
         });
         const vid = document.getElementById(videoId);
         vid.srcObject = mediaStream;
-        
-        // Force no-mirror — override browser default
-        vid.style.transform = 'none';
-        vid.style.webkitTransform = 'none';
-        
+
+        // Fix mirror: kamera depan (user) di-mirror agar natural seperti cermin,
+        // kamera belakang (environment) TIDAK di-mirror
+        vid.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none';
+
         await vid.play().catch(() => {});
+
+        // Torch hardware untuk kamera belakang
+        await applyTorch();
     } catch(e) {
         toast("❌ Kamera tidak bisa diakses: " + e.message);
         console.error(e);
+    }
+}
+
+// Aktifkan/matikan torch (senter) di track kamera belakang
+async function applyTorch() {
+    if (!mediaStream) return;
+    const track = mediaStream.getVideoTracks()[0];
+    if (!track) return;
+    // Torch hanya tersedia untuk kamera belakang
+    if (facingMode !== 'environment') return;
+    try {
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        if (caps.torch) {
+            await track.applyConstraints({ advanced: [{ torch: flashModeOn }] });
+        }
+    } catch(e) {
+        console.warn("Torch tidak didukung:", e.message);
     }
 }
 
@@ -516,7 +541,11 @@ async function startKamera(videoId) {
 // ================================================================
 async function switchKamera() {
     facingMode = facingMode === "user" ? "environment" : "user";
-    const lbl = document.getElementById('btn-flash-toggle');
+    // Matikan torch dulu sebelum ganti kamera
+    flashModeOn = false;
+    const btn = document.getElementById('btn-flash-toggle');
+    btn.textContent = "⚡ FLASH: OFF";
+    btn.className = "bg-[#1A1A1A] border border-gray-700 text-[#E5C158] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider active:scale-95 transition";
     toast(facingMode === "user" ? "📷 Kamera depan" : "📷 Kamera belakang");
     await startKamera('video-potret');
 }
@@ -524,23 +553,31 @@ async function switchKamera() {
 // ================================================================
 // TOGGLE FLASH (software — screen putih)
 // ================================================================
-function toggleFlashMode() {
+async function toggleFlashMode() {
     flashModeOn = !flashModeOn;
     const btn = document.getElementById('btn-flash-toggle');
     btn.textContent = flashModeOn ? "⚡ FLASH: ON" : "⚡ FLASH: OFF";
     btn.className = flashModeOn
         ? "bg-[#E5C158] border border-[#E5C158] text-black px-3 py-1 rounded-full text-[10px] font-bold tracking-wider active:scale-95 transition"
         : "bg-[#1A1A1A] border border-gray-700 text-[#E5C158] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider active:scale-95 transition";
+    // Langsung nyalakan/matikan torch jika kamera belakang aktif
+    await applyTorch();
+    if (facingMode !== 'environment' && flashModeOn) {
+        toast("💡 Flash aktif saat kamera belakang");
+    }
 }
 
-// GANTI fungsi doFlash() yang lama dengan ini:
 async function doFlash() {
     if (!flashModeOn) return;
-    // Pakai flash-overlay yang full-screen (sudah ada di HTML)
-    const el = document.getElementById('flash-overlay');
-    el.classList.add('flash-on');
-    await tunggu(80);
-    el.classList.remove('flash-on');
+    // Selalu tampilkan screen flash sebagai feedback shutter
+    const elScreen  = document.getElementById('screen-flash');
+    const elOverlay = document.getElementById('flash-overlay');
+    // flash-overlay lebih terang (full screen), screen-flash di dalam viewfinder
+    elOverlay.classList.add('flash-on');
+    elScreen.style.opacity = '1';
+    await tunggu(100);
+    elOverlay.classList.remove('flash-on');
+    elScreen.style.opacity = '0';
 }
 
 // ================================================================
@@ -642,14 +679,17 @@ async function jepretDanUpload() {
     // Flash
     await doFlash();
 
-    // Capture — TANPA mirror
+    // Capture
     const vid = document.getElementById('video-potret');
     const w   = vid.videoWidth  || 1280;
     const h   = vid.videoHeight || 720;
     const cvs = document.createElement('canvas');
     cvs.width = w; cvs.height = h;
     const ctx = cvs.getContext('2d');
-    ctx.drawImage(vid, 0, 0, w, h); // Langsung, tidak di-mirror
+    // Kamera depan: video sudah di-mirror di layar (scaleX -1).
+    // Agar hasil foto TIDAK mirror (natural), gambar langsung tanpa flip.
+    // Kamera belakang: gambar langsung juga, sudah benar.
+    ctx.drawImage(vid, 0, 0, w, h);
 
     // Watermark
     const fontSize = Math.round(h * 0.022);
