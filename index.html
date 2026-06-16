@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap');
 
@@ -201,9 +202,8 @@
                 ⚡ FLASH: OFF
             </button>
             <!-- Switch kamera -->
-            <button onclick="switchKamera()"
-                class="bg-[#1A1A1A] border border-gray-700 text-gray-300 px-3 py-1 rounded-full text-[10px] font-bold active:scale-95 transition">
-                🔄 BALIK
+            <button onclick="switchKamera()">
+                <i class="bi bi-camera-fill"></i> <i class="bi bi-arrow-repeat"></i>
             </button>
         </div>
 
