@@ -2,12 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Andi & Zaza - Digital Photobooth AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap');
 
@@ -96,7 +95,8 @@
         .orn-tl { top: 0; left: 0; }
         .orn-br { bottom: 0; right: 0; transform: rotate(180deg); }
 
-        /* Input focus */
+        /* Input focus & anti-zoom iOS (font-size min 16px) */
+        input { font-size: 16px !important; }
         input:focus { outline: 2px solid #E5C158; outline-offset: 1px; }
     </style>
 </head>
@@ -202,8 +202,9 @@
                 ⚡ FLASH: OFF
             </button>
             <!-- Switch kamera -->
-            <button onclick="switchKamera()">
-                <i class="bi bi-camera-fill"></i> <i class="bi bi-arrow-repeat"></i>
+            <button onclick="switchKamera()"
+                class="bg-[#1A1A1A] border border-gray-700 text-gray-300 px-3 py-1 rounded-full text-[10px] font-bold active:scale-95 transition">
+                🔄 BALIK
             </button>
         </div>
 
@@ -232,7 +233,7 @@
             <!-- Counter kiri -->
             <div class="flex flex-col items-center w-14">
                 <span class="text-[#E5C158] font-bold text-lg leading-none" id="count-display">0</span>
-                <span class="text-[9px] text-gray-500">/ 7</span>
+                <span class="text-[9px] text-gray-500">/ 10</span>
             </div>
 
             <!-- Shutter tengah -->
@@ -351,6 +352,39 @@
         </div>
     </div>
 
+    <!-- ====================================================
+         PAGE BLOCKED: Akses ditolak
+    ===================================================== -->
+    <div id="page-blocked" class="page-hidden fixed inset-0 z-[9999] flex flex-col items-center justify-center px-8 bg-[#0A0A0A]">
+        <div class="w-full max-w-xs text-center space-y-6">
+            <!-- Ornamen atas -->
+            <div class="text-5xl">🔒</div>
+
+            <div class="space-y-2">
+                <h1 class="text-xl font-wedding tracking-widest text-[#E5C158] font-bold">Akses Terbatas</h1>
+                <div class="w-10 h-px bg-[#E5C158]/30 mx-auto"></div>
+            </div>
+
+            <div class="bg-[#151515] border border-[#E5C158]/20 rounded-2xl p-5 space-y-3">
+                <p class="text-xs text-gray-300 leading-relaxed">
+                    Perangkat ini sudah pernah mengakses<br>
+                    <span class="text-[#E5C158] font-semibold font-wedding tracking-widest">Andi &amp; Zaza Photobooth</span>
+                </p>
+                <div class="w-full h-px bg-gray-800"></div>
+                <p id="blocked-reason" class="text-[10px] text-gray-500 leading-relaxed">
+                    Setiap perangkat hanya diperbolehkan satu sesi foto.
+                </p>
+            </div>
+
+            <p class="text-[9px] text-gray-600 leading-relaxed">
+                Silakan temui panitia jika ada kendala.<br>
+                Terima kasih sudah hadir! 💛
+            </p>
+
+            <p class="text-[8px] text-gray-800 font-wedding tracking-widest">Andi &amp; Zaza · 2025</p>
+        </div>
+    </div>
+
 </div><!-- end #app -->
 
 <script>
@@ -442,7 +476,10 @@ async function inisialisasiAI() {
     document.getElementById('scan-line').classList.remove('hidden');
 }
 
-document.addEventListener('DOMContentLoaded', () => setTimeout(inisialisasiAI, 400));
+document.addEventListener('DOMContentLoaded', () => {
+    guardAkses();
+    setTimeout(inisialisasiAI, 400);
+});
 
 // ================================================================
 // NAVIGASI
@@ -654,7 +691,7 @@ function updateCounter() {
 
 async function jepretDanUpload() {
     if (isJepretBusy) return;
-    if (countPotret >= 7) {
+    if (countPotret >= 10) {
         await pindahHalamn_safe('sesi-potret', 'gallery');
         return;
     }
@@ -662,21 +699,7 @@ async function jepretDanUpload() {
     isJepretBusy = true;
     document.getElementById('btn-jepret').disabled = true;
 
-    // Countdown
-    const overlay = document.getElementById('countdown-overlay');
-    const numEl   = document.getElementById('countdown-number');
-    overlay.style.display = 'flex';
-    overlay.classList.remove('hidden');
-
-    for (let i = 3; i >= 1; i--) {
-        numEl.textContent = i;
-        await tunggu(700);
-    }
-    numEl.textContent = "📸";
-    await tunggu(250);
-    overlay.style.display = 'none';
-
-    // Flash
+    // Langsung flash & jepret (tanpa countdown)
     await doFlash();
 
     // Capture
@@ -742,9 +765,9 @@ async function jepretDanUpload() {
         const prev = document.getElementById('potret-preview');
         prev.innerHTML = `<img src="${pubUrl}" class="w-full h-full object-cover rounded-lg">`;
 
-        toast(`✅ Foto ${countPotret}/7 tersimpan!`);
+        toast(`✅ Foto ${countPotret}/10 tersimpan!`);
 
-        if (countPotret >= 7) {
+        if (countPotret >= 10) {
             await tunggu(800);
             await pindahHalamn_safe('sesi-potret', 'gallery');
         }
@@ -923,6 +946,44 @@ async function bagiFoto() {
     } else {
         try { await navigator.clipboard.writeText(url); toast("✅ Link disalin!"); }
         catch(e) { toast("Buka URL: " + url); }
+    }
+}
+
+// ================================================================
+// SATU HP SATU AKSES
+// Pakai localStorage (persist setelah tab tutup) + BroadcastChannel
+// ================================================================
+function guardAkses() {
+    const KEY  = 'photobooth_aktif_v1';
+    const SESI = Math.random().toString(36).slice(2);
+
+    function tampilBlocked(alasan) {
+        const app = document.getElementById('app');
+        if (app) app.classList.add('page-hidden');
+        const blk = document.getElementById('page-blocked');
+        if (blk) blk.classList.remove('page-hidden');
+        const reason = document.getElementById('blocked-reason');
+        if (alasan && reason) reason.textContent = alasan;
+    }
+
+    const sudahAda = localStorage.getItem(KEY);
+    if (sudahAda && sudahAda !== SESI) {
+        tampilBlocked('Perangkat ini telah mencapai batas akses photobooth.');
+        return;
+    }
+
+    // Klaim slot untuk tab/sesi ini (tetap tersimpan meski tab ditutup)
+    localStorage.setItem(KEY, SESI);
+
+    // BroadcastChannel: blokir tab lain di HP yang sama
+    if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('photobooth_guard_v1');
+        bc.postMessage({ type: 'KLAIM', id: SESI });
+        bc.onmessage = (e) => {
+            if (e.data.type === 'KLAIM' && e.data.id !== SESI) {
+                tampilBlocked('Tab lain di perangkat ini sudah aktif.');
+            }
+        };
     }
 }
 
