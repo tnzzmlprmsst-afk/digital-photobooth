@@ -12,7 +12,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap');
         body { 
-            background-color: #0A0A0A; /* Ubah background dasar menjadi hitam agar menyatu */
+            background-color: #0A0A0A;
             font-family: 'Montserrat', sans-serif; 
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
@@ -31,28 +31,28 @@
         .custom-scroll::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
-<body class="w-full h-full m-0 p-0 overflow-hidden flex justify-center items-center">
+<body class="w-full h-full m-0 p-0 overflow-hidden flex justify-center items-center bg-[#0A0A0A]">
 
-    <div class="w-full h-full bg-[#0A0A0A] relative overflow-hidden flex flex-col justify-between text-white p-6 pt-8">
+    <div class="w-full h-full max-w-[500px] bg-[#0A0A0A] relative overflow-hidden flex flex-col justify-between text-white p-6 pt-10">
         
         <div id="page-sesi-potret" class="flex flex-col justify-between h-full w-full relative z-10">
             
-            <div class="flex justify-between items-center px-2 z-30">
-                <button onclick="toggleKamera()" class="flex items-center gap-1 text-[11px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-amber-500"></i>
+            <div class="flex justify-between items-center px-4 z-30 bg-black/20 py-2 rounded-2xl backdrop-blur-sm">
+                <button onclick="toggleKamera()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-amber-500"></i>
                     <span id="text-kamera">FRONT</span>
                 </button>
-                <button onclick="toggleFlash()" class="flex items-center gap-1 text-[11px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="zap" id="icon-flash" class="w-3.5 h-3.5 text-amber-500"></i>
+                <button onclick="toggleFlash()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="zap" id="icon-flash" class="w-4 h-4 text-amber-500"></i>
                     <span id="text-flash">AUTO</span>
                 </button>
-                <button onclick="toggleFilter()" class="flex items-center gap-1 text-[11px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="aperture" class="w-3.5 h-3.5 text-amber-500"></i>
+                <button onclick="toggleFilter()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="aperture" class="w-4 h-4 text-amber-500"></i>
                     <span id="text-filter">BEAUTY</span>
                 </button>
             </div>
 
-            <div class="w-full flex-1 my-6 rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-inner">
+            <div class="w-full flex-1 aspect-[3/4] my-6 rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-2xl flex items-center justify-center">
                 <video id="video-potret" class="w-full h-full object-cover mirror-view filter-beauty" autoplay muted playsinline></video>
                 
                 <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-50 transition-opacity duration-75"></div>
@@ -63,18 +63,18 @@
                 </div>
             </div>
 
-            <div class="flex justify-between items-center px-4 pb-4 z-30">
-                <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-12 h-12 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
-                    <i data-lucide="image" class="w-5 h-5"></i>
+            <div class="flex justify-between items-center px-6 pb-6 z-30">
+                <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
+                    <i data-lucide="image" class="w-6 h-6"></i>
                 </button>
                 
-                <button onclick="prosesAmbilFoto()" class="w-16 h-16 bg-white rounded-full p-1 border-4 border-zinc-700 active:scale-90 transform transition duration-100 flex items-center justify-center">
+                <button onclick="prosesAmbilFoto()" class="w-20 h-20 bg-white rounded-full p-1.5 border-4 border-zinc-700 active:scale-90 transform transition duration-100 flex items-center justify-center">
                     <div class="w-full h-full bg-white rounded-full border-2 border-zinc-200"></div>
                 </button>
                 
-                <div id="upload-indicator" class="w-12 h-12 flex items-center justify-center text-xs">
-                    <i data-lucide="check-circle" class="w-6 h-6 text-green-400 hidden"></i>
-                    <i data-lucide="loader-2" class="w-6 h-6 text-amber-400 animate-spin hidden"></i>
+                <div id="upload-indicator" class="w-14 h-14 flex items-center justify-center text-xs">
+                    <i data-lucide="check-circle" class="w-7 h-7 text-green-400 hidden"></i>
+                    <i data-lucide="loader-2" class="w-7 h-7 text-amber-400 animate-spin hidden"></i>
                 </div>
             </div>
         </div>
@@ -136,12 +136,12 @@
 
     <script>
         const SUPABASE_URL = "https://plcrvnyfhczykdqrjhfs.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B"; // Pastikan keys ini aktif di Dashboard Supabase Anda
+        const SUPABASE_KEY = "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B"; 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let mediaStream = null;
         let countPotret = 0;
-        const LIMIT_FOTO = 20; // Set limit ke 20 sesuai request
+        const LIMIT_FOTO = 20; 
         
         let modeFacing = "user"; 
         let modeFlash = "AUTO";  
@@ -153,7 +153,7 @@
                 mediaStream.getTracks().forEach(track => track.stop());
             }
 
-            // Konfigurasi media stream tanpa sangkut paut Face-API (Anti Error Load)
+            // Memastikan aspek rasio kamera standar (tidak merusak resolusi hardware HP)
             const constraints = {
                 video: {
                     facingMode: modeFacing,
@@ -173,162 +173,4 @@
                 } else {
                     videoElement.classList.remove('mirror-view');
                 }
-            } catch (err) {
-                console.error("Gagal membuka kamera: ", err);
-                alert("Akses kamera tidak diizinkan atau tidak ditemukan.");
             }
-        }
-        window.addEventListener('DOMContentLoaded', startKameraOtomatis);
-
-        async function toggleKamera() {
-            modeFacing = (modeFacing === "user") ? "environment" : "user";
-            document.getElementById('text-kamera').innerText = (modeFacing === "user") ? "FRONT" : "BACK";
-            await startKameraOtomatis();
-        }
-
-        function toggleFlash() {
-            const label = document.getElementById('text-flash');
-            const icon = document.getElementById('icon-flash');
-            
-            if (modeFlash === "AUTO") {
-                modeFlash = "ON";
-                label.innerText = "ON";
-                icon.className = "w-3.5 h-3.5 text-orange-400";
-            } else if (modeFlash === "ON") {
-                modeFlash = "OFF";
-                label.innerText = "OFF";
-                icon.className = "w-3.5 h-3.5 text-zinc-500";
-            } else {
-                modeFlash = "AUTO";
-                label.innerText = "AUTO";
-                icon.className = "w-3.5 h-3.5 text-amber-500";
-            }
-        }
-
-        function toggleFilter() {
-            const videoElement = document.getElementById('video-potret');
-            const label = document.getElementById('text-filter');
-            
-            videoElement.classList.remove('filter-beauty', 'filter-bw', 'filter-sepia');
-
-            if (jenisFilter === "BEAUTY") {
-                jenisFilter = "BW";
-                label.innerText = "B&W";
-                videoElement.classList.add('filter-bw');
-            } else if (jenisFilter === "BW") {
-                jenisFilter = "SEPIA";
-                label.innerText = "SEPIA";
-                videoElement.classList.add('filter-sepia');
-            } else {
-                jenisFilter = "BEAUTY";
-                label.innerText = "BEAUTY";
-                videoElement.classList.add('filter-beauty');
-            }
-        }
-
-        async function pindahHalaman(dari, ke) {
-            document.getElementById(`page-${dari}`).classList.add('page-hidden');
-            document.getElementById(`page-${ke}`).classList.remove('page-hidden');
-
-            if(dari === 'sesi-potret' && mediaStream) { 
-                mediaStream.getTracks().forEach(track => track.stop()); 
-                mediaStream = null;
-            }
-
-            if (ke === 'sesi-potret') {
-                countPotret = 0;
-                document.getElementById('jumlah-potret').innerText = `0/${LIMIT_FOTO}`;
-                await startKameraOtomatis();
-            } else if (ke === 'gallery') {
-                ambilSemuaFotoDariDatabase();
-            }
-        }
-
-        // Fungsi Alur Sinkronisasi Flash & Pengambilan Gambar Nyata
-        function prosesAmbilFoto() {
-            if(countPotret >= LIMIT_FOTO) { 
-                pindahHalaman('sesi-potret', 'gallery'); 
-                return; 
-            }
-
-            const flash = document.getElementById('flash-overlay');
-            
-            if (modeFlash === "ON" || modeFlash === "AUTO") {
-                // Nyalakan kilatan layar putih terlebih dahulu
-                flash.classList.remove('opacity-0');
-                flash.classList.add('opacity-100');
-                
-                // Beri jeda sedikit agar kamera menangkap pendaran cahaya putih baru jepret & matikan flash
-                setTimeout(() => {
-                    jepretDanUpload();
-                    setTimeout(() => {
-                        flash.classList.remove('opacity-100');
-                        flash.classList.add('opacity-0');
-                    }, 50);
-                }, 150);
-            } else {
-                jepretDanUpload();
-            }
-        }
-
-        async function jepretDanUpload() {
-            const video = document.getElementById('video-potret');
-            const loader = document.getElementById('upload-indicator');
-
-            loader.querySelector('[data-lucide="loader-2"]').classList.remove('hidden');
-
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            
-            if (modeFacing === "user") {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-            
-            if (jenisFilter === "BEAUTY") {
-                ctx.filter = "contrast(104%) brightness(106%) saturate(103%)";
-            } else if (jenisFilter === "BW") {
-                ctx.filter = "grayscale(100%) contrast(120%)";
-            } else if (jenisFilter === "SEPIA") {
-                ctx.filter = "sepia(70%) contrast(95%) brightness(100%)";
-            }
-
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.restore();
-            
-            canvas.toBlob(async (blob) => {
-                if(!blob) return;
-                const namaFile = `photo_${Date.now()}_${Math.random().toString(36).substring(5)}.jpg`;
-                
-                // Mengunggah ke storage Supabase
-                const { data, error } = await supabaseClient.storage.from('galeri-foto').upload(namaFile, blob, { 
-                    contentType: 'image/jpeg',
-                    cacheControl: '3600',
-                    upsert: false
-                });
-                
-                loader.querySelector('[data-lucide="loader-2"]').classList.add('hidden');
-
-                if(error) { 
-                    console.error(error);
-                    alert("Gagal menyimpan ke cloud server. Pastikan kebijakan RLS Supabase bucket Anda diset publik."); 
-                    return; 
-                }
-
-                const centang = loader.querySelector('[data-lucide="check-circle"]');
-                centang.classList.remove('hidden');
-                setTimeout(() => centang.classList.add('hidden'), 1000);
-
-                countPotret++;
-                document.getElementById('jumlah-potret').innerText = `${countPotret}/${LIMIT_FOTO}`;
-                
-                if(countPotret === LIMIT_FOTO) { 
-                    await pindahHalaman('sesi-potret', 'gallery'); 
-                }
-            }, 'image/jpeg', 0.9);
-        }
