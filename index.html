@@ -10,9 +10,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght=400;700&family=Montserrat:wght=300;400;600&display=swap');
         body { 
-            background-color: #E2DBC4; /* Kembali ke warna latar belakang krem semula */
+            background-color: #0A0A0A; /* Mengubah background dasar menjadi hitam agar menyatu dengan aplikasi */
             font-family: 'Montserrat', sans-serif; 
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
@@ -31,55 +31,55 @@
         .custom-scroll::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
-<body class="w-full h-full m-0 p-0 overflow-hidden flex justify-center items-center p-4">
+<body class="w-full h-full m-0 p-0 overflow-hidden flex justify-center items-center">
 
-    <div class="w-full max-w-[400px] h-[92vh] bg-[#0A0A0A] rounded-[48px] relative overflow-hidden flex flex-col justify-between text-white shadow-2xl border-[10px] border-[#1A1A1A]">
+    <div class="w-full h-full bg-[#0A0A0A] relative overflow-hidden flex flex-col justify-between text-white p-6 pt-10">
         
-        <div id="page-sesi-potret" class="flex flex-col justify-between h-full w-full relative z-10 p-6 pt-8">
+        <div id="page-sesi-potret" class="flex flex-col justify-between h-full w-full relative z-10">
             
-            <div class="flex justify-between items-center px-2 z-30">
-                <button onclick="toggleKamera()" class="flex items-center gap-1 text-[11px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-amber-500"></i>
+            <div class="flex justify-between items-center px-4 py-2 bg-zinc-900/50 rounded-2xl backdrop-blur-sm z-30">
+                <button onclick="toggleKamera()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-amber-500"></i>
                     <span id="text-kamera">FRONT</span>
                 </button>
-                <button onclick="toggleFlash()" class="flex items-center gap-1 text-[11px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="zap" id="icon-flash" class="w-3.5 h-3.5 text-amber-500"></i>
+                <button onclick="toggleFlash()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="zap" id="icon-flash" class="w-4 h-4 text-amber-500"></i>
                     <span id="text-flash">AUTO</span>
                 </button>
-                <button onclick="toggleFilter()" class="flex items-center gap-1 text-[11px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="aperture" class="w-3.5 h-3.5 text-amber-500"></i>
+                <button onclick="toggleFilter()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="aperture" class="w-4 h-4 text-amber-500"></i>
                     <span id="text-filter">BEAUTY</span>
                 </button>
             </div>
 
-            <div class="w-full flex-1 my-6 rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-inner">
-                <video id="video-potret" class="w-full h-full object-cover mirror-view filter-beauty" autoplay muted playsinline></video>
+            <div class="w-full aspect-[3/4] my-auto rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-2xl flex items-center justify-center">
+                <video id="video-potret" class="w-full h-full object-cover mirror-view filter-beauty transition-opacity duration-75" autoplay muted playsinline></video>
                 
-                <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none transition-opacity duration-75 z-40"></div>
+                <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-50 transition-opacity duration-75"></div>
 
-                <div class="absolute bottom-6 left-6 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border border-white/10 flex items-center gap-1.5 z-30">
+                <div class="absolute bottom-6 left-6 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border border-white/10 flex items-center gap-1.5 z-40">
                     <span>📷 Frame:</span>
-                    <span id="jumlah-potret" class="text-amber-400 font-bold">0/7</span>
+                    <span id="jumlah-potret" class="text-amber-400 font-bold">0/20</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center px-4 pb-2 z-30">
-                <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-12 h-12 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
-                    <i data-lucide="image" class="w-5 h-5"></i>
+            <div class="flex justify-between items-center px-6 pb-6 z-30">
+                <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
+                    <i data-lucide="image" class="w-6 h-6"></i>
                 </button>
                 
-                <button onclick="jepretDanUpload()" class="w-16 h-16 bg-white rounded-full p-1 border-4 border-zinc-700 active:scale-90 transform transition duration-100 flex items-center justify-center">
+                <button onclick="prosesAmbilFoto()" class="w-20 h-20 bg-white rounded-full p-1.5 border-4 border-zinc-700 active:scale-90 transform transition duration-100 flex items-center justify-center">
                     <div class="w-full h-full bg-white rounded-full border-2 border-zinc-200"></div>
                 </button>
                 
-                <div id="upload-indicator" class="w-12 h-12 flex items-center justify-center text-xs">
-                    <i data-lucide="check-circle" class="w-6 h-6 text-green-400 hidden"></i>
-                    <i data-lucide="loader-2" class="w-6 h-6 text-amber-400 animate-spin hidden"></i>
+                <div id="upload-indicator" class="w-14 h-14 flex items-center justify-center text-xs">
+                    <i data-lucide="check-circle" class="w-7 h-7 text-green-400 hidden"></i>
+                    <i data-lucide="loader-2" class="w-7 h-7 text-amber-400 animate-spin hidden"></i>
                 </div>
             </div>
         </div>
 
-        <div id="page-gallery" class="page-hidden flex flex-col justify-between h-full w-full p-6 pt-8 z-10">
+        <div id="page-gallery" class="page-hidden flex flex-col justify-between h-full w-full z-10">
             <div class="flex justify-between items-center border-b border-white/10 pb-4">
                 <div>
                     <p class="text-[9px] tracking-[0.2em] text-amber-500/80 font-wedding">THE WEDDING OF</p>
@@ -91,7 +91,7 @@
             <div id="gallery-grid" class="grid grid-cols-3 gap-2 overflow-y-auto h-full my-4 py-1 custom-scroll">
                 </div>
             
-            <div class="flex justify-between items-center border-t border-white/10 pt-4">
+            <div class="flex justify-between items-center border-t border-white/10 pt-4 pb-2">
                 <button onclick="pindahHalaman('gallery', 'sesi-potret')" class="flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-white transition">
                     <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> BACK
                 </button>
@@ -101,7 +101,7 @@
             </div>
         </div>
 
-        <div id="page-result-single" class="page-hidden flex flex-col justify-between h-full w-full p-6 pt-8 z-10">
+        <div id="page-result-single" class="page-hidden flex flex-col justify-between h-full w-full z-10">
             <div>
                 <button onclick="pindahHalaman('result-single', 'gallery')" class="flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-white transition">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i> BACK
@@ -112,14 +112,14 @@
                 <img id="img-single-view" class="w-full h-full object-contain" src="">
             </div>
             
-            <div class="pb-2">
+            <div class="pb-4">
                 <a id="btn-download" href="#" target="_blank" class="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white py-3 rounded-xl font-bold text-[11px] tracking-widest flex items-center justify-center gap-2 transition">
                     <i data-lucide="download" class="w-4 h-4"></i> DOWNLOAD
                 </a>
             </div>
         </div>
 
-        <div id="page-done-finish" class="page-hidden flex flex-col justify-center items-center h-full w-full p-6 text-center z-10 space-y-4">
+        <div id="page-done-finish" class="page-hidden flex flex-col justify-center items-center h-full w-full text-center z-10 space-y-4">
             <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-400">
                 <i data-lucide="heart" class="w-8 h-8 fill-amber-400"></i>
             </div>
@@ -141,8 +141,8 @@
 
         let mediaStream = null;
         let countPotret = 0;
+        const LIMIT_FOTO = 20; // Batas limit diubah ke 20
         
-        // Aturan Toolbar Atas Kamera
         let modeFacing = "user"; 
         let modeFlash = "AUTO";  
         let jenisFilter = "BEAUTY"; 
@@ -153,15 +153,17 @@
                 mediaStream.getTracks().forEach(track => track.stop());
             }
 
+            const constraints = {
+                video: {
+                    facingMode: modeFacing,
+                    width: { ideal: 1280 },
+                    height: { ideal: 960 }
+                },
+                audio: false
+            };
+
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: modeFacing, 
-                        width: { ideal: 1280 }, 
-                        height: { ideal: 960 } 
-                    } 
-                });
-                
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 const videoElement = document.getElementById('video-potret');
                 videoElement.srcObject = mediaStream;
 
@@ -171,19 +173,17 @@
                     videoElement.classList.remove('mirror-view');
                 }
             } catch (err) {
-                console.error("Akses kamera ditolak/gagal:", err);
+                console.error("Akses kamera gagal:", err);
             }
         }
         window.addEventListener('DOMContentLoaded', startKameraOtomatis);
 
-        // 1. FUNGSI SWAP KAMERA (FRONT / BACK)
         async function toggleKamera() {
             modeFacing = (modeFacing === "user") ? "environment" : "user";
             document.getElementById('text-kamera').innerText = (modeFacing === "user") ? "FRONT" : "BACK";
             await startKameraOtomatis();
         }
 
-        // 2. FUNGSI SWITCH MODE FLASH
         function toggleFlash() {
             const label = document.getElementById('text-flash');
             const icon = document.getElementById('icon-flash');
@@ -191,19 +191,18 @@
             if (modeFlash === "AUTO") {
                 modeFlash = "ON";
                 label.innerText = "ON";
-                icon.className = "w-3.5 h-3.5 text-orange-400";
+                icon.className = "w-4 h-4 text-orange-400";
             } else if (modeFlash === "ON") {
                 modeFlash = "OFF";
                 label.innerText = "OFF";
-                icon.className = "w-3.5 h-3.5 text-zinc-500";
+                icon.className = "w-4 h-4 text-zinc-500";
             } else {
                 modeFlash = "AUTO";
                 label.innerText = "AUTO";
-                icon.className = "w-3.5 h-3.5 text-amber-500";
+                icon.className = "w-4 h-4 text-amber-500";
             }
         }
 
-        // 3. FUNGSI SWITCH FILTER KAMERA
         function toggleFilter() {
             const videoElement = document.getElementById('video-potret');
             const label = document.getElementById('text-filter');
@@ -236,31 +235,45 @@
 
             if (ke === 'sesi-potret') {
                 countPotret = 0;
-                document.getElementById('jumlah-potret').innerText = "0/7";
+                document.getElementById('jumlah-potret').innerText = `0/${LIMIT_FOTO}`;
                 await startKameraOtomatis();
             } else if (ke === 'gallery') {
                 ambilSemuaFotoDariDatabase();
             }
         }
 
-        async function jepretDanUpload() {
-            if(countPotret >= 7) { 
-                await pindahHalaman('sesi-potret', 'gallery'); 
+        // Alur sinkronisasi kilatan flash putih terintegrasi dengan penangkapan gambar
+        function prosesAmbilFoto() {
+            if(countPotret >= LIMIT_FOTO) { 
+                pindahHalaman('sesi-potret', 'gallery'); 
                 return; 
             }
-            
-            const video = document.getElementById('video-potret');
-            const flash = document.getElementById('flash-overlay');
-            const loader = document.getElementById('upload-indicator');
 
+            const flash = document.getElementById('flash-overlay');
+            const video = document.getElementById('video-potret');
+            
             if (modeFlash === "ON" || modeFlash === "AUTO") {
+                // Sembunyikan video sebentar dan naikkan opacity putih untuk mensimulasikan kilatan hardware flash
                 flash.classList.remove('opacity-0');
                 flash.classList.add('opacity-100');
+                video.classList.add('opacity-0');
+                
                 setTimeout(() => {
-                    flash.classList.remove('opacity-100');
-                    flash.classList.add('opacity-0');
-                }, 100);
+                    jepretDanUpload();
+                    setTimeout(() => {
+                        flash.classList.remove('opacity-100');
+                        flash.classList.add('opacity-0');
+                        video.classList.remove('opacity-0');
+                    }, 60);
+                }, 150);
+            } else {
+                jepretDanUpload();
             }
+        }
+
+        async function jepretDanUpload() {
+            const video = document.getElementById('video-potret');
+            const loader = document.getElementById('upload-indicator');
 
             loader.querySelector('[data-lucide="loader-2"]').classList.remove('hidden');
 
@@ -306,9 +319,9 @@
                 setTimeout(() => centang.classList.add('hidden'), 1000);
 
                 countPotret++;
-                document.getElementById('jumlah-potret').innerText = `${countPotret}/7`;
+                document.getElementById('jumlah-potret').innerText = `${countPotret}/${LIMIT_FOTO}`;
                 
-                if(countPotret === 7) { 
+                if(countPotret === LIMIT_FOTO) { 
                     await pindahHalaman('sesi-potret', 'gallery'); 
                 }
             }, 'image/jpeg', 0.9);
@@ -319,7 +332,7 @@
             grid.innerHTML = "<div class='text-center col-span-3 py-20 text-xs text-zinc-600 animate-pulse'>Loading...</div>";
             
             const { data: daftarFile, error } = await supabaseClient.storage.from('galeri-foto').list('', {
-                limit: 24,
+                limit: 30,
                 sortBy: { column: 'created_at', order: 'desc' }
             });
 
