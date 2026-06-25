@@ -2,104 +2,248 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Digital Photobooth AI - Premium Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Photobooth</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; }
-
-        html, body {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            background: #050505;
-            font-family: 'Montserrat', sans-serif;
-            overflow: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&display=swap');
+        body { background-color: #E2D9A3; font-family: 'Montserrat', sans-serif; }
         .font-wedding { font-family: 'Cinzel', serif; }
         .page-hidden { display: none !important; }
-
-        #app {
-            width: 100%;
-            height: 100dvh;
-            background: #050505;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #gallery-grid {
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        #gallery-grid::-webkit-scrollbar { width: 4px; }
-        #gallery-grid::-webkit-scrollbar-thumb { background: #222; border-radius: 4px; }
-
-        #flash-overlay {
-            position: absolute; inset: 0;
-            background: white; opacity: 0;
-            pointer-events: none; z-index: 99;
-            transition: opacity 0.05s ease-out;
-        }
-        #flash-overlay.flash-on { opacity: 1; }
-
-        .toast {
-            position: absolute;
-            bottom: calc(env(safe-area-inset-bottom) + 100px);
-            left: 50%; transform: translateX(-50%);
-            background: rgba(15, 15, 15, 0.95);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(229, 193, 88, 0.2);
-            color: #E5C158; padding: 10px 22px;
-            border-radius: 30px; font-size: 11px; font-weight: 500;
-            white-space: nowrap; z-index: 9999;
-            pointer-events: none; opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .toast.show { opacity: 1; transform: translate(-50%, -5px); }
-
-        @keyframes scanMove {
-            0% { top: 5%; opacity: 0.3; }
-            50% { top: 90%; opacity: 1; }
-            100% { top: 5%; opacity: 0.3; }
-        }
-        .scan-line {
-            position: absolute; left: 0; right: 0; height: 3px;
-            background: linear-gradient(to right, transparent, #E5C158, transparent);
-            box-shadow: 0 0 12px #E5C158;
-            animation: scanMove 2.5s ease-in-out infinite;
-        }
-
-        .filter-none { filter: none; }
-        .filter-b-w { filter: grayscale(100%) contrast(120%); }
-        .filter-vintage { filter: sepia(50%) hue-rotate(-30deg) saturate(140%); }
-        .filter-warm { filter: sepia(20%) saturate(130%) contrast(110%); }
+        
+        /* Modifikasi scrollbar galeri agar tipis dan bersih */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #8C6A3B; border-radius: 10px; }
     </style>
 </head>
-<body>
-<div id="app">
+<body class="flex flex-col items-center justify-center min-h-screen p-2">
 
-    <div id="flash-overlay"></div>
+    <div class="w-full max-w-[360px] h-[740px] bg-[#0A0A0A] rounded-[45px] border-[6px] border-[#1A1A1A] shadow-2xl relative overflow-hidden flex flex-col justify-between text-white">
+        
+        <div id="page-sesi-potret" class="flex flex-col justify-between h-full w-full p-5 relative z-10">
+            <div class="flex justify-between items-center px-2 pt-2 text-gray-400 text-xs tracking-wider">
+                <span class="flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> FRONT</span>
+                <span class="flex items-center gap-1"><i data-lucide="zap" class="w-3.5 h-3.5"></i> AUTO</span>
+                <span class="flex items-center gap-1"><i data-lucide="aperture" class="w-3.5 h-3.5"></i> BEAUTY</span>
+            </div>
 
-    <div id="toast" class="toast"></div>
+            <div class="w-full h-[470px] bg-gray-900 rounded-[32px] overflow-hidden relative border border-gray-800/80 my-3 shadow-inner">
+                <video id="video-potret" class="w-full h-full object-cover" autoplay muted playsinline></video>
+                
+                <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none transition-opacity duration-75 z-20"></div>
 
-    <div id="page-registrasi" class="flex flex-col justify-between h-full z-10 px-6">
-        <div class="text-center mt-20 space-y-3">
-            <p class="text-[10px] tracking-[0.4em] text-[#E5C158]/60 font-wedding uppercase">Digital Premium Photobooth</p>
-            <h1 class="text-3xl font-wedding tracking-widest text-[#E5C158] font-semibold">The Celebration</h1>
-            <div class="w-16 h-px bg-[#E5C158]/30 mx-auto mt-4"></div>
+                <div class="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-white/10">
+                    📸 Frame: <span id="jumlah-potret" class="text-[#E5C158] font-bold">0</span>/7
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-8 pb-4">
+                <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-10 h-10 rounded-xl bg-gray-800 border border-white/20 overflow-hidden flex items-center justify-center group active:scale-95 transition">
+                    <i data-lucide="image" class="w-5 h-5 text-gray-400 group-hover:text-white"></i>
+                </button>
+                
+                <button onclick="jepretDanUpload()" class="w-16 h-16 bg-white rounded-full p-1 border-4 border-gray-400/60 shadow-lg active:scale-90 transform transition duration-100 flex items-center justify-center">
+                    <div class="w-full h-full bg-white rounded-full border border-gray-300"></div>
+                </button>
+                
+                <div id="upload-indicator" class="w-10 h-10 flex items-center justify-center text-xs">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-green-500 hidden"></i>
+                    <i data-lucide="loader-2" class="w-5 h-5 text-yellow-500 animate-spin hidden"></i>
+                </div>
+            </div>
         </div>
 
-        <div class="space-y-5 max-w-sm mx-auto w-full">
-            <div class="bg-[#111] p-6 rounded-2xl border border-white/5 space-y-4 shadow-xl">
-                <div class="space-y-1.5">
-                    <label class="block text-[9px] text-gray-400 tracking-wider uppercase font-semibold">Nama Lengkap</label>
-                    <input type="text" id="reg-nama"
-                        class="w-full bg-[#1A1A1A] text-white border border-white/10 rounded-xl py-3 px-4
+        <div id="page-gallery" class="page-hidden flex flex-col justify-between h-full w-full p-5 z-10">
+            <div class="flex justify-between items-center mt-2 px-1 border-b border-gray-800 pb-3">
+                <div class="text-left">
+                    <p class="text-[8px] tracking-widest text-[#E5C158]/70 font-wedding">THE WEDDING OF</p>
+                    <h1 class="text-sm font-wedding tracking-widest text-[#E5C158] font-bold">Andi & Zaza</h1>
+                </div>
+                <span class="text-[10px] bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-gray-300">RESULT! ✨</span>
+            </div>
+            
+            <div id="gallery-grid" class="grid grid-cols-3 gap-2 overflow-y-auto h-[490px] py-3 px-1 custom-scroll">
+                </div>
+            
+            <div class="flex justify-between items-center px-1 pb-2">
+                <button onclick="pindahHalaman('gallery', 'sesi-potret')" class="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> KAMERA
+                </button>
+                <button onclick="pindahHalaman('gallery', 'done-finish')" class="bg-[#8C6A3B] text-white px-5 py-2 rounded-xl text-xs font-bold tracking-wider shadow-lg active:scale-95 transition">
+                    SELESAI →
+                </button>
+            </div>
+        </div>
+
+        <div id="page-result-single" class="page-hidden flex flex-col justify-between h-full w-full p-5 z-10">
+            <div class="mt-2">
+                <button onclick="pindahHalaman('result-single', 'gallery')" class="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i> Kembali ke Galeri
+                </button>
+            </div>
+            
+            <div class="w-full h-[500px] bg-[#111] rounded-2xl overflow-hidden border border-gray-800/60 my-3 shadow-xl">
+                <img id="img-single-view" class="w-full h-full object-contain" src="">
+            </div>
+            
+            <div class="px-1 pb-2">
+                <a id="btn-download" href="#" target="_blank" class="w-full bg-[#8C6A3B] hover:bg-[#A6804E] text-white py-2.5 rounded-xl font-bold text-xs tracking-widest flex items-center justify-center gap-2 shadow-md transition">
+                    <i data-lucide="download" class="w-4 h-4"></i> UNDUH FOTO
+                </a>
+            </div>
+        </div>
+
+        <div id="page-done-finish" class="page-hidden flex flex-col justify-center items-center h-full w-full p-6 text-center z-10 space-y-6">
+            <div class="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 animate-bounce">
+                <i data-lucide="heart" class="w-8 h-8 fill-emerald-400"></i>
+            </div>
+            <div class="space-y-2">
+                <h1 class="text-2xl font-wedding tracking-widest text-[#E5C158] font-bold">Andi & Zaza</h1>
+                <div class="w-8 h-[1px] bg-[#E5C158]/30 mx-auto my-3"></div>
+                <p class="text-xs text-gray-300 leading-relaxed px-4">Terima kasih sudah mengabadikan momen berharga di pernikahan kami. Seluruh foto Anda telah tersimpan rapi di dalam sistem galeri.</p>
+            </div>
+            <button onclick="pindahHalaman('done-finish', 'sesi-potret')" class="border border-white/20 hover:bg-white/5 text-white px-5 py-2 rounded-xl text-xs font-semibold tracking-wide transition">
+                Ambil Foto Lagi
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Inisialisasi Kredensial Database Supabase Anda
+        const SUPABASE_URL = "https://plcrvnyfhczykdqrjhfs.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let mediaStream = null;
+        let countPotret = 0;
+
+        // Fungsi Memulai Kamera Otomatis Saat Halaman Pertama Kali Dimuat
+        async function startKameraOtomatis() {
+            lucide.createIcons(); // render icon lucide
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
+                document.getElementById('video-potret').srcObject = mediaStream;
+            } catch (err) {
+                alert("Gagal mengakses kamera depan. Pastikan izin kamera sudah diaktifkan di browser!");
+                console.error("Kamera Error: ", err);
+            }
+        }
+        // Picu kamera langsung berjalan tanpa registrasi data diri
+        window.addEventListener('DOMContentLoaded', startKameraOtomatis);
+
+        // Alur navigasi antar halaman internal mockup smartphone
+        async function pindahHalaman(dari, ke) {
+            document.getElementById(`page-${dari}`).classList.add('page-hidden');
+            document.getElementById(`page-${ke}`).classList.remove('page-hidden');
+
+            // Matikan kamera hanya jika berpindah keluar dari layar sesi-potret
+            if(dari === 'sesi-potret' && mediaStream) { 
+                mediaStream.getTracks().forEach(track => track.stop()); 
+                mediaStream = null;
+            }
+
+            // Aktifkan kembali kamera jika kembali masuk ke halaman sesi-potret
+            if (ke === 'sesi-potret') {
+                countPotret = 0;
+                document.getElementById('jumlah-potret').innerText = countPotret;
+                await startKameraOtomatis();
+            } else if (ke === 'gallery') {
+                ambilSemuaFotoDariDatabase();
+            }
+        }
+
+        // Fungsi Penangkapan Gambar (Shutter Trigger) dan Upload langsung ke Storage
+        async function jepretDanUpload() {
+            if(countPotret >= 7) { 
+                alert("Batas maksimal 7 foto terpenuhi! Mengalihkan ke galeri."); 
+                await pindahHalaman('sesi-potret', 'gallery'); 
+                return; 
+            }
+            
+            const video = document.getElementById('video-potret');
+            const flash = document.getElementById('flash-overlay');
+            const loader = document.getElementById('upload-indicator');
+
+            // Efek kedipan simulasi blitz kamera asli
+            flash.classList.remove('opacity-0');
+            flash.classList.add('opacity-100');
+            setTimeout(() => {
+                flash.classList.remove('opacity-100');
+                flash.classList.add('opacity-0');
+            }, 80);
+
+            // Tampilkan ikon loading proses konversi/unggah
+            loader.querySelector('[data-lucide="loader-2"]').classList.remove('hidden');
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            
+            // Mirroring agar hasil foto tidak terbalik kanan-kiri seperti cermin asli
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(async (blob) => {
+                if(!blob) return;
+                const namaFile = `photo_${Date.now()}_${Math.random().toString(36).substring(5)}.jpg`;
+                
+                // Proses unggah mentah data blob gambar ke bucket storage supabase
+                const { data, error } = await supabaseClient.storage.from('galeri-foto').upload(namaFile, blob, { contentType: 'image/jpeg' });
+                
+                // Sembunyikan loading spinner
+                loader.querySelector('[data-lucide="loader-2"]').classList.add('hidden');
+
+                if(error) { 
+                    alert("Gagal mengunggah foto: " + error.message); 
+                    return; 
+                }
+
+                // Efek ikon centang hijau sukses kilat
+                const centang = loader.querySelector('[data-lucide="check-circle"]');
+                centang.classList.remove('hidden');
+                setTimeout(() => centang.classList.add('hidden'), 1000);
+
+                countPotret++;
+                document.getElementById('jumlah-potret').innerText = countPotret;
+                
+                // Jika jepretan sudah mencapai 7 kali, langsung lempar otomatis ke folder galeri hasil
+                if(countPotret === 7) { 
+                    await pindahHalaman('sesi-potret', 'gallery'); 
+                }
+            }, 'image/jpeg');
+        }
+
+        // Penarikan database storage galeri berkas untuk di-render ke halaman grid
+        async function ambilSemuaFotoDariDatabase() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = "<div class='text-center col-span-3 py-16 text-xs text-gray-500 animate-pulse'>Memuat seluruh foto galeri...</div>";
+            
+            const { data: daftarFile, error } = await supabaseClient.storage.from('galeri-foto').list('', {
+                limit: 50,
+                sortBy: { column: 'created_at', order: 'desc' }
+            });
+
+            if(error || !daftarFile || daftarFile.length === 0) { 
+                grid.innerHTML = "<div class='text-center col-span-3 py-16 text-xs text-gray-500'>Belum ada foto yang tersimpan di server.</div>"; 
+                return; 
+            }
+
+            grid.innerHTML = "";
+            daftarFile.forEach(file => {
+                // Lewati berkas placeholder sistem bawaan jika ada
+                if(file.name === '.emptyFolderPlaceholder') return;
+
+                const { data } = supabaseClient.storage.from('galeri-foto').getPublicUrl(file.name);
+                
+                const kotak = document.createElement('div');
+                kotak.className = "bg-gray-900 aspect-square rounded-2xl overflow-hidden border border-gray-800 hover:border-amber
