@@ -246,4 +246,19 @@
                 const { data } = supabaseClient.storage.from('galeri-foto').getPublicUrl(file.name);
                 
                 const kotak = document.createElement('div');
-                kotak.className = "bg-gray-900 aspect-square rounded-2xl overflow-hidden border border-gray-800 hover:border-amber
+                kotak.className = "bg-gray-900 aspect-square rounded-2xl overflow-hidden border border-gray-800 hover:border-amber-500/50 cursor-pointer active:scale-95 transition shadow-md";
+                kotak.onclick = () => bukaSingleFoto(data.publicUrl);
+                kotak.innerHTML = `<img src="${data.publicUrl}" class="w-full h-full object-cover">`;
+                grid.appendChild(kotak);
+            });
+        }
+
+        // Tampilan pratinjau tunggal resolusi penuh & tautan download berkas
+        function bukaSingleFoto(url) {
+            document.getElementById('img-single-view').src = url;
+            document.getElementById('btn-download').href = url;
+            pindahHalaman('gallery', 'result-single');
+        }
+    </script>
+</body>
+</html>
