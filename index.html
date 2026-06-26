@@ -34,55 +34,6 @@
 
     <div class="w-full h-full bg-[#0A0A0A] relative overflow-hidden flex flex-col justify-between text-white p-6 pt-10">
         
-        <div id="page-registrasi" class="flex flex-col justify-between h-full w-full relative z-10">
-            <div class="my-auto space-y-6 max-w-md mx-auto w-full">
-                <div class="space-y-2 text-center mb-8">
-                    <h2 class="text-xs tracking-[0.3em] text-[#E2C799] font-semibold">WELCOME TO THE WEDDING OF</h2>
-                    <h1 class="text-3xl font-wedding tracking-widest text-[#E2C799] font-bold">Andi & Zaza</h1>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] tracking-wider text-gray-400 font-medium">Wajib nama lengkap</label>
-                        <input type="text" id="input-nama" placeholder="Nama Lengkap..." class="w-full bg-[#F3DEBA]/20 border border-transparent rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#E2C799]/50 transition">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] tracking-wider text-gray-400 font-medium">Wajib email aktif</label>
-                        <input type="email" id="input-email" placeholder="Alamat Email..." class="w-full bg-[#F3DEBA]/20 border border-transparent rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#E2C799]/50 transition">
-                    </div>
-                </div>
-
-                <div class="pt-4">
-                    <button onclick="simpanRegistrasiDanLanjut()" class="w-full bg-[#8c6239] hover:bg-[#734d2a] text-white py-3.5 rounded-xl font-bold text-xs tracking-[0.2em] transition shadow-lg active:scale-[0.98]">
-                        SELANJUTNYA
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="page-sesi-potret" class="page-hidden flex flex-col justify-between h-full w-full relative z-10">
-            <div class="flex justify-between items-center px-4 py-2 bg-zinc-900/50 rounded-2xl backdrop-blur-sm z-30">
-                <button onclick="toggleKamera()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="refresh-cw" class="w-4 h-4 text-[#E2C799]"></i>
-                    <span id="text-kamera">FRONT</span>
-                </button>
-                <button onclick="toggleFlash()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="zap" id="icon-flash" class="w-4 h-4 text-[#E2C799]"></i>
-                    <span id="text-flash">AUTO</span>
-                </button>
-                <button onclick="toggleFilter()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
-                    <i data-lucide="aperture" class="w-4 h-4 text-[#E2C799]"></i>
-                    <span id="text-filter">BEAUTY</span>
-                </button>
-            </div>
-
-            <div class="w-full aspect-[3/4] my-auto rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-2xl flex items-center justify-center">
-                <video id="video-potret" class="w-full h-full object-cover mirror-view filter-beauty" autoplay muted playsinline></video>
-                <div class="absolute bottom-6 left-6 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border border-white/10 flex items-center gap-1.5 z-40">
-                    <span>📷 Frame:</span>
-                    <span id="jumlah-potret" class="text-[#E2C799] font-bold">0/20</span>
-                </div>
-            </div>
 
             <div class="flex justify-between items-center px-6 pb-6 z-30">
                 <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
