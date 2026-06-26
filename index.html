@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/face-api.js/0.22.2/face-api.min.js" defer></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght=400;700&family=Montserrat:wght=300;400;600&display=swap');
@@ -21,27 +19,62 @@
         }
         .font-wedding { font-family: 'Cinzel', serif; }
         .page-hidden { display: none !important; }
+        
         .mirror-view { transform: scaleX(-1); }
+        
         .filter-beauty { filter: contrast(104%) brightness(106%) saturate(103%); }
         .filter-bw { filter: grayscale(100%) contrast(120%); }
         .filter-sepia { filter: sepia(70%) contrast(95%) brightness(100%); }
+
         .custom-scroll::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body class="w-full h-full m-0 p-0 overflow-hidden flex justify-center items-center">
 
+    <!-- OVERLAY FLASH NYATA (Fixed Full Layar di Atas Semua Elemen) -->
     <div id="flash-overlay" class="fixed inset-0 bg-white opacity-0 pointer-events-none z-[9999] transition-opacity duration-75"></div>
 
+    <!-- Container Utama -->
     <div class="w-full h-full bg-[#0A0A0A] relative overflow-hidden flex flex-col justify-between text-white p-6 pt-10">
         
+        <!-- PAGE 1: SESI POTRET -->
+        <div id="page-sesi-potret" class="flex flex-col justify-between h-full w-full relative z-10">
+            <!-- Header Toolbar Atas -->
+            <div class="flex justify-between items-center px-4 py-2 bg-zinc-900/50 rounded-2xl backdrop-blur-sm z-30">
+                <button onclick="toggleKamera()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-[#E2C799]"></i>
+                    <span id="text-kamera">FRONT</span>
+                </button>
+                <button onclick="toggleFlash()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="zap" id="icon-flash" class="w-4 h-4 text-[#E2C799]"></i>
+                    <span id="text-flash">AUTO</span>
+                </button>
+                <button onclick="toggleFilter()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
+                    <i data-lucide="aperture" class="w-4 h-4 text-[#E2C799]"></i>
+                    <span id="text-filter">BEAUTY</span>
+                </button>
+            </div>
 
+            <!-- Jendela Kamera -->
+            <div class="w-full aspect-[3/4] my-auto rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-2xl flex items-center justify-center">
+                <video id="video-potret" class="w-full h-full object-cover mirror-view filter-beauty" autoplay muted playsinline></video>
+                
+                <div class="absolute bottom-6 left-6 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border border-white/10 flex items-center gap-1.5 z-40">
+                    <span>📷 Frame:</span>
+                    <span id="jumlah-potret" class="text-[#E2C799] font-bold">0/20</span>
+                </div>
+            </div>
+
+            <!-- Tombol Kontrol Bawah -->
             <div class="flex justify-between items-center px-6 pb-6 z-30">
                 <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
                     <i data-lucide="image" class="w-6 h-6"></i>
                 </button>
+                
                 <button onclick="prosesAmbilFoto()" class="w-20 h-20 bg-white rounded-full p-1.5 border-4 border-zinc-700 active:scale-90 transform transition duration-100 flex items-center justify-center">
                     <div class="w-full h-full bg-white rounded-full border-2 border-zinc-200"></div>
                 </button>
+                
                 <div id="upload-indicator" class="w-14 h-14 flex items-center justify-center text-xs">
                     <i data-lucide="check-circle" class="w-7 h-7 text-green-400 hidden"></i>
                     <i data-lucide="loader-2" class="w-7 h-7 text-[#E2C799] animate-spin hidden"></i>
@@ -49,61 +82,55 @@
             </div>
         </div>
 
-        <div id="page-faceid-scan" class="page-hidden flex flex-col justify-between h-full w-full z-10 text-center">
-            <div class="my-auto space-y-6 max-w-sm mx-auto w-full flex flex-col items-center">
-                <div class="w-48 aspect-square rounded-[32px] border-2 border-[#E2C799] p-3 flex items-center justify-center bg-zinc-900/50 relative overflow-hidden">
-                    <div class="w-full h-full rounded-2xl border border-dashed border-[#E2C799]/40 bg-black/40 flex items-center justify-center">
-                        <i data-lucide="scan-face" class="w-16 h-16 text-[#E2C799]/70 animate-pulse"></i>
-                    </div>
-                </div>
-                <div class="space-y-1">
-                    <h2 class="text-lg font-bold tracking-widest text-white">SCAN FACE ID</h2>
-                    <p id="status-ai" class="text-xs text-amber-400/80 font-medium">Memuat model AI...</p>
-                </div>
-                <button onclick="jalankanScanWajah()" class="w-full bg-zinc-800 border border-white/10 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold text-xs tracking-widest transition active:scale-[0.98]">
-                    START SCANNING
-                </button>
-            </div>
-        </div>
-
+        <!-- PAGE 2: GALLERY GRID (HASIL) -->
         <div id="page-gallery" class="page-hidden flex flex-col justify-between h-full w-full z-10">
+            <!-- Header Atas Sesuai Gambar Referensi -->
             <div class="flex justify-between items-start pt-2 pb-4">
                 <div class="flex flex-col gap-2">
                     <h1 class="text-2xl font-black tracking-wider text-white">RESULT!</h1>
-                    <button onclick="pindahHalaman('gallery', 'faceid-scan')" class="px-3 py-1 bg-zinc-900 border border-[#E2C799]/30 text-[#E2C799] text-[10px] font-bold rounded-lg flex items-center gap-1 active:scale-95 transition">
-                        <i data-lucide="scan-face" class="w-3.5 h-3.5"></i> RE-SCAN FACE
+                    <!-- Fitur Scan Face ID Berbentuk Persegi Kecil -->
+                    <button onclick="mulaiScanFaceID()" class="w-12 h-12 border border-[#E2C799]/40 bg-zinc-900/80 rounded-xl flex flex-col items-center justify-center active:scale-95 transition gap-0.5 shadow-md">
+                        <i data-lucide="scan-face" class="w-5 h-5 text-[#E2C799]"></i>
+                        <span class="text-[8px] font-bold text-[#E2C799] tracking-tighter">SCAN</span>
                     </button>
                 </div>
                 <div class="text-right">
-                    <p class="text-base font-wedding tracking-widest text-[#E2C799] font-bold leading-tight">Andi</p>
+                    <p class="text-base font-wedding tracking-widest text-[#E2C799] font-bold leading-tight">Zuzu</p>
                     <p class="text-[10px] font-wedding text-[#E2C799]/70 my-0.5">&</p>
                     <p class="text-base font-wedding tracking-widest text-[#E2C799] font-bold leading-tight">Zaza</p>
                 </div>
             </div>
             
+            <!-- Grid Foto Galeri (Diperbaiki agar tidak tumpat tindih vertikal seperti image_a0c5b5.jpg) -->
             <div class="flex-1 overflow-y-auto my-2 pr-1 custom-scroll">
-                <div id="gallery-grid" class="grid grid-cols-3 gap-2.5 auto-rows-max w-full"></div>
+                <div id="gallery-grid" class="grid grid-cols-3 gap-2.5 auto-rows-max w-full">
+                    <!-- Item galeri di-render presisi di sini -->
+                </div>
             </div>
             
+            <!-- Footer Navigasi Bawah -->
             <div class="flex justify-between items-center border-t border-white/10 pt-4 pb-2 mt-2">
                 <button onclick="pindahHalaman('gallery', 'sesi-potret')" class="flex items-center gap-1.5 text-xs font-bold tracking-widest text-gray-400 hover:text-white transition">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> BACK
                 </button>
-                <button onclick="pindahHalaman('gallery', 'done-finish')" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-xl text-xs font-bold tracking-widest transition shadow-lg">
+                <button onclick="pindahHalaman('gallery', 'done-finish')" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-xl text-xs font-bold tracking-widest transition shadow-lg shadow-amber-900/20">
                     FINISH
                 </button>
             </div>
         </div>
 
+        <!-- PAGE 3: RESULT SINGLE VIEW -->
         <div id="page-result-single" class="page-hidden flex flex-col justify-between h-full w-full z-10">
             <div class="pt-2">
                 <button onclick="pindahHalaman('result-single', 'gallery')" class="flex items-center gap-1 text-xs font-bold tracking-wider text-gray-400 hover:text-white transition">
                     <i data-lucide="chevron-left" class="w-5 h-5"></i> BACK
                 </button>
             </div>
+            
             <div class="w-full flex-1 bg-zinc-900/40 rounded-[28px] overflow-hidden border border-white/10 my-4 flex items-center justify-center p-2">
                 <img id="img-single-view" class="w-full h-full object-contain rounded-2xl" src="">
             </div>
+            
             <div class="pb-4">
                 <button onclick="jalankanProsesUnduh()" class="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white py-3.5 rounded-xl font-bold text-xs tracking-widest flex items-center justify-center gap-2 transition">
                     <i data-lucide="download" class="w-4 h-4 text-[#E2C799]"></i> DOWNLOAD PHOTO
@@ -111,21 +138,23 @@
             </div>
         </div>
 
+        <!-- PAGE 4: DONE FINISH -->
         <div id="page-done-finish" class="page-hidden flex flex-col justify-center items-center h-full w-full text-center z-10 space-y-4">
             <div class="w-16 h-16 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-400">
                 <i data-lucide="heart" class="w-8 h-8 fill-amber-400"></i>
             </div>
             <div class="space-y-2">
-                <h1 class="text-xl font-wedding tracking-widest text-[#E2C799] font-bold">Andi & Zaza</h1>
+                <h1 class="text-xl font-wedding tracking-widest text-[#E2C799] font-bold">Zuzu & Zaza</h1>
                 <p class="text-[11px] text-gray-400 leading-relaxed px-4">Terima kasih sudah mengabadikan momen bersama kami.</p>
             </div>
-            <button onclick="pindahHalaman('done-finish', 'registrasi')" class="border border-white/10 bg-white/5 text-white px-5 py-2.5 rounded-xl text-[11px] font-semibold tracking-wider transition">
+            <button onclick="pindahHalaman('done-finish', 'sesi-potret')" class="border border-white/10 bg-white/5 text-white px-5 py-2.5 rounded-xl text-[11px] font-semibold tracking-wider transition">
                 Ambil Foto Baru
             </button>
         </div>
 
     </div>
 
+    <!-- JAVASCRIPT SYSTEM -->
     <script>
         const SUPABASE_URL = "https://plcrvnyfhczykdqrjhfs.supabase.co";
         const SUPABASE_KEY = "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B";
@@ -137,56 +166,17 @@
         
         let modeFacing = "user"; 
         let modeFlash = "AUTO";  
-        let jenisFilter = "BEAUTY";
-        let isAiReady = false;
-
-        // AMBIL SCRIPT UTAMA KETIKA DOM DISIAPKAN
-        window.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            setTimeout(inisialisasiAI, 1500); // Beri jeda agar library global terbaca penuh
-        });
-
-        // PERBAIKAN INISIALISASI MODEL FACE ID
-        async function inisialisasiAI() {
-            const statusEl = document.getElementById('status-ai');
-            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-            
-            try {
-                if (typeof faceapi === 'undefined') {
-                    throw new Error("Library faceapi belum termuat sempurna di global scope.");
-                }
-                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                
-                isAiReady = true;
-                if(statusEl) statusEl.innerText = "MODEL AI READY";
-                console.log("Face-API ready.");
-            } catch (err) {
-                if(statusEl) statusEl.innerText = "Gagal memuat model AI.";
-                console.error("Gagal inisialisasi Face-API:", err);
-            }
-        }
-
-        function simpanRegistrasiDanLanjut() {
-            const nama = document.getElementById('input-nama').value.trim();
-            const email = document.getElementById('input-email').value.trim();
-            
-            if(!nama || !email) {
-                alert("Mohon isi Nama Lengkap dan Alamat Email Anda!");
-                return;
-            }
-            pindahHalaman('registrasi', 'sesi-potret');
-        }
+        let jenisFilter = "BEAUTY"; 
 
         async function startKameraOtomatis() {
+            lucide.createIcons();
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
             }
 
             const constraints = {
                 video: {
-                    facingMode: modeFacing,
+                    facingMode: { exact: modeFacing },
                     width: { ideal: 1280 },
                     height: { ideal: 960 }
                 },
@@ -197,16 +187,18 @@
                 mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
                 const videoElement = document.getElementById('video-potret');
                 videoElement.srcObject = mediaStream;
-                
-                if (modeFacing === "user") {
-                    videoElement.classList.add('mirror-view');
-                } else {
-                    videoElement.classList.remove('mirror-view');
-                }
             } catch (err) {
-                console.error("Akses kamera gagal:", err);
+                // Fallback jika mode exact 'user' ditolak oleh beberapa browser bawaan HP
+                try {
+                    const fallbackConstraints = { video: { facingMode: modeFacing }, audio: false };
+                    mediaStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                    document.getElementById('video-potret').srcObject = mediaStream;
+                } catch(fallbackErr) {
+                    console.error("Akses kamera gagal:", fallbackErr);
+                }
             }
         }
+        window.addEventListener('DOMContentLoaded', startKameraOtomatis);
 
         async function toggleKamera() {
             modeFacing = (modeFacing === "user") ? "environment" : "user";
@@ -257,62 +249,38 @@
             document.getElementById(`page-${dari}`).classList.add('page-hidden');
             document.getElementById(`page-${ke}`).classList.remove('page-hidden');
 
+            if(dari === 'sesi-potret' && mediaStream) { 
+                mediaStream.getTracks().forEach(track => track.stop()); 
+                mediaStream = null;
+            }
+
             if (ke === 'sesi-potret') {
                 countPotret = 0;
                 document.getElementById('jumlah-potret').innerText = `0/${LIMIT_FOTO}`;
                 await startKameraOtomatis();
             } else if (ke === 'gallery') {
-                if (mediaStream) { 
-                    mediaStream.getTracks().forEach(track => track.stop()); 
-                    mediaStream = null;
-                }
                 ambilSemuaFotoDariDatabase();
             }
-            lucide.createIcons();
         }
 
-        // PERBAIKAN: MENYALAKAN LAMPU HARDWARE FLASH LED (TORCH) KAMERA BELAKANG ASLI
-        async function setHardwareTorch(status) {
-            if (!mediaStream) return;
-            const videoTrack = mediaStream.getVideoTracks()[0];
-            if (!videoTrack) return;
-
-            try {
-                // Periksa kapabilitas perangkat apakah mendukung fitur 'torch'
-                const capabilities = typeof videoTrack.getCapabilities === 'function' ? videoTrack.getCapabilities() : {};
-                if (capabilities.torch) {
-                    await videoTrack.applyConstraints({
-                        advanced: [{ torch: status }]
-                    });
-                }
-            } catch (e) {
-                console.warn("Hardware flash LED (torch) tidak dapat diakses pada device/mode kamera ini:", e);
-            }
-        }
-
-        async function prosesAmbilFoto() {
+        function prosesAmbilFoto() {
             if(countPotret >= LIMIT_FOTO) { 
                 pindahHalaman('sesi-potret', 'gallery'); 
                 return; 
             }
 
-            const flashOverlay = document.getElementById('flash-overlay');
-            const harfiahFlashAktif = (modeFlash === "ON" || (modeFlash === "AUTO" && modeFacing === "environment"));
-
-            if (harfiahFlashAktif) {
-                // 1. Hidupkan hardware flash lampu asli (Kamera Belakang)
-                await setHardwareTorch(true);
-                // 2. Beri efek kilatan cahaya putih di layar pelengkap
-                flashOverlay.style.opacity = "1";
+            const flash = document.getElementById('flash-overlay');
+            
+            if (modeFlash === "ON" || modeFlash === "AUTO") {
+                // Efek kilatan cahaya putih penuh layar mendadak sebelum penangkapan frame canvas
+                flash.style.opacity = "1";
                 
-                setTimeout(async () => {
+                setTimeout(() => {
                     jepretDanUpload();
-                    setTimeout(async () => {
-                        flashOverlay.style.opacity = "0";
-                        // 3. Matikan hardware flash setelah snapshot diambil
-                        await setHardwareTorch(false);
+                    setTimeout(() => {
+                        flash.style.opacity = "0";
                     }, 100);
-                }, 150);
+                }, 50);
             } else {
                 jepretDanUpload();
             }
@@ -321,6 +289,7 @@
         async function jepretDanUpload() {
             const video = document.getElementById('video-potret');
             const loader = document.getElementById('upload-indicator');
+
             loader.querySelector('[data-lucide="loader-2"]').classList.remove('hidden');
 
             const canvas = document.createElement('canvas');
@@ -378,6 +347,7 @@
                 if(file.name === '.emptyFolderPlaceholder') return;
                 const { data } = supabaseClient.storage.from('galeri-foto').getPublicUrl(file.name);
                 
+                // Elemen pembungkus foto dikunci dengan aspect-square agar ukurannya seragam dan rapi
                 const kotak = document.createElement('div');
                 kotak.className = "w-full aspect-square bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition shadow-md relative block";
                 kotak.onclick = () => {
@@ -389,6 +359,7 @@
             });
         }
 
+        // Perbaikan fitur unduh paksa agar kompatibel penuh di browser HP iOS/Android
         async function jalankanProsesUnduh() {
             const urlGambar = document.getElementById('img-single-view').src;
             if(!urlGambar) return;
@@ -409,19 +380,14 @@
                     window.URL.revokeObjectURL(urlBlob);
                 }, 150);
             } catch (e) {
+                // Alternatif fallback jika CORS memblokir fetch unduhan di HP tertentu
                 window.open(urlGambar, '_blank');
             }
         }
 
-        // FUNGSI FACE ID SEKARANG BERFUNGSI SEPENUHNYA
-        function jalankanScanWajah() {
-            if(!isAiReady) {
-                alert("Model AI Face ID belum siap atau gagal dimuat. Sila muat semula halaman.");
-                return;
-            }
-            alert("Sistem mengaktifkan modul kamera imbasan Face ID wajah...");
-            // Logika lanjutan deteksi wajah anda (faceapi.detectAllFaces dll) kini boleh berjalan tanpa crash global.
-            pindahHalaman('faceid-scan', 'gallery');
+        function mulaiScanFaceID() {
+            alert("Fitur Face ID mengaktifkan modul kamera pemindai wajah...");
+            // Integrasikan pemanggilan faceapi.js Anda di sini
         }
     </script>
 </body>
