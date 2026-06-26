@@ -3,26 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Booth — Zuzu &amp; Zaza</title>
+<title>Booth</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0a0a0c;color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#080808;color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 :root{
-  --bg:#0a0a0c;
+  --bg:#080808;
   --s1:#111113;
-  --s2:#17171a;
-  --s3:#212126;
+  --s2:#18181c;
+  --s3:#222228;
   --border:rgba(255,255,255,0.06);
   --border2:rgba(255,255,255,0.12);
-  --gold:#C9A567;
-  --gold-dim:rgba(201,165,103,0.18);
-  --ember:#8B5E3C;
+  --gold:#D4AF70;
+  --gold2:rgba(212,175,112,0.18);
   --muted:#52525e;
-  --muted2:#76747e;
-  --film:'Cormorant Garamond',serif;
+  --muted2:#71717a;
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
 }
@@ -37,30 +35,21 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 #cam-vp{position:absolute;inset:0;overflow:hidden}
 #cam-vp video{width:100%;height:100%;object-fit:cover;display:block;will-change:transform}
 
-/* film sprocket strip — signature element */
-.film-strip{position:absolute;top:0;bottom:0;width:14px;z-index:3;pointer-events:none;opacity:.55}
-.film-strip.left{left:0}
-.film-strip.right{right:0}
-.film-strip-holes{position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 10px,rgba(0,0,0,.55) 10px,rgba(0,0,0,.55) 16px);}
-.film-strip-holes::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 12px, rgba(255,255,255,.06) 12px, rgba(255,255,255,.06) 13px, transparent 13px, transparent 16px)}
-
 /* Gradient overlays */
-.vp-fade-top{position:absolute;inset:0 0 auto 0;height:170px;background:linear-gradient(to bottom,rgba(0,0,0,.75) 0%,transparent 100%);pointer-events:none;z-index:2}
-.vp-fade-bot{position:absolute;inset:auto 0 0 0;height:230px;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 100%);pointer-events:none;z-index:2}
+.vp-fade-top{position:absolute;inset:0 0 auto 0;height:160px;background:linear-gradient(to bottom,rgba(0,0,0,.72) 0%,transparent 100%);pointer-events:none;z-index:2}
+.vp-fade-bot{position:absolute;inset:auto 0 0 0;height:220px;background:linear-gradient(to top,rgba(0,0,0,.78) 0%,transparent 100%);pointer-events:none;z-index:2}
 
 /* Top bar */
 .cam-bar{
   position:absolute;top:0;left:0;right:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
-  padding:calc(var(--safe-t) + 16px) 22px 16px;
+  padding:calc(var(--safe-t) + 16px) 20px 16px;
 }
 .cam-bar-center{
   position:absolute;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:1px;
+  font-size:11px;font-weight:700;letter-spacing:.16em;color:rgba(255,255,255,.4);
+  text-transform:uppercase;
 }
-.cam-bar-center .frame-no{font-family:var(--film);font-style:italic;font-size:15px;color:var(--gold);letter-spacing:.02em;line-height:1}
-.cam-bar-center .facing-lbl{font-size:9px;font-weight:700;letter-spacing:.18em;color:rgba(255,255,255,.38);text-transform:uppercase;margin-top:2px}
-
 .ico-btn{
   width:38px;height:38px;border-radius:50%;
   background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,.1);
@@ -69,7 +58,6 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 }
 .ico-btn:active{transform:scale(.85);background:rgba(255,255,255,.15)}
 .ico-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:rgba(255,255,255,.85)}
-.ico-btn.lit{background:var(--gold-dim);border-color:rgba(201,165,103,.35)}
 .ico-btn.lit svg{color:var(--gold)}
 .flash-dot{
   position:absolute;top:6px;right:6px;
@@ -78,16 +66,16 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 }
 .ico-btn.lit .flash-dot{display:block}
 
-/* Filter panel — closed by default, opens only on tap */
+/* Filter panel — hidden by default */
 #filter-panel{
-  position:absolute;bottom:106px;left:0;right:0;z-index:8;
+  position:absolute;bottom:104px;left:0;right:0;z-index:8;
   padding:0 0 10px;
-  max-height:0;opacity:0;pointer-events:none;overflow:hidden;
-  transition:max-height .26s cubic-bezier(.4,0,.2,1),opacity .2s;
+  transform:translateY(12px);opacity:0;pointer-events:none;
+  transition:transform .22s cubic-bezier(.4,0,.2,1),opacity .22s;
 }
-#filter-panel.open{max-height:140px;opacity:1;pointer-events:all}
+#filter-panel.open{transform:translateY(0);opacity:1;pointer-events:all}
 .filter-row{
-  display:flex;gap:10px;padding:8px 18px 4px;
+  display:flex;gap:10px;padding:6px 18px 4px;
   overflow-x:auto;scroll-snap-type:x mandatory;
   -ms-overflow-style:none;scrollbar-width:none;
 }
@@ -103,14 +91,14 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   position:relative;border:2px solid transparent;
   transition:border-color .18s,box-shadow .18s;background:#1a1a1a;
 }
-.f-item.sel .f-thumb{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,165,103,.3)}
+.f-item.sel .f-thumb{border-color:var(--gold);box-shadow:0 0 0 1px rgba(212,175,112,.3)}
 .f-thumb canvas{width:100%;height:100%;object-fit:cover;display:block}
 .f-thumb-label{
   position:absolute;bottom:0;left:0;right:0;
   padding:4px 3px 5px;
   background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
-  font-size:7.5px;font-weight:700;color:#fff;text-align:center;
-  letter-spacing:.02em;line-height:1.1;
+  font-size:8px;font-weight:700;color:#fff;text-align:center;
+  letter-spacing:.03em;line-height:1.1;
 }
 .f-name{font-size:9px;font-weight:500;color:rgba(255,255,255,.45);letter-spacing:.02em;white-space:nowrap;transition:color .18s}
 .f-item.sel .f-name{color:var(--gold)}
@@ -139,8 +127,6 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .shutter:active{transform:scale(.9)}
 .shutter-inner{width:100%;height:100%;border-radius:50%;background:#fff;transition:transform .1s}
 .shutter:active .shutter-inner{transform:scale(.88)}
-.shutter.busy{pointer-events:none}
-.shutter.busy .shutter-inner{background:var(--gold)}
 
 .counter-pill{
   width:46px;height:46px;border-radius:11px;
@@ -150,8 +136,8 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .counter-n{font-size:17px;font-weight:900;color:#fff;line-height:1}
 .counter-d{font-size:8px;font-weight:600;color:var(--muted);line-height:1;margin-top:2px}
 
-/* Flash overlay — covers full viewport including safe areas, blink only */
-#flash-ov{position:fixed;top:-10vh;left:-10vw;right:-10vw;bottom:-10vh;background:#fff;opacity:0;pointer-events:none;z-index:9999;transition:opacity .04s linear}
+/* Flash overlay */
+#flash-ov{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9999;transition:opacity .05s}
 
 /* ─── GALLERY PAGE ─── */
 #pg-gallery{padding-top:calc(var(--safe-t) + 0px)}
@@ -162,16 +148,16 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .gl-title-wrap h1{font-size:24px;font-weight:900;letter-spacing:-.02em}
 .gl-title-wrap p{font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--muted2);margin-top:3px;text-transform:uppercase}
 .gl-meta{text-align:right}
-.gl-meta-name{font-family:var(--film);font-style:italic;font-size:15px;font-weight:500;color:var(--gold);letter-spacing:.02em;line-height:1.45}
+.gl-meta-name{font-size:13px;font-weight:300;font-style:italic;color:var(--gold);letter-spacing:.04em;line-height:1.5}
 .gl-meta-amp{font-size:9px;color:var(--muted);margin:1px 0}
 
 .scan-ico-btn{
   width:38px;height:38px;border-radius:10px;
-  background:var(--gold-dim);border:1px solid rgba(201,165,103,.25);
+  background:var(--gold2);border:1px solid rgba(212,175,112,.25);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:2px;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:6px;
 }
-.scan-ico-btn:active{transform:scale(.88);background:rgba(201,165,103,.28)}
+.scan-ico-btn:active{transform:scale(.88);background:rgba(212,175,112,.28)}
 .scan-ico-btn svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .scan-ico-btn span{font-size:7px;font-weight:800;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
 
@@ -200,7 +186,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .ghost-btn:active{color:#fff}
 .ghost-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .prim-btn{
-  background:var(--gold);color:#0a0a0c;border:none;border-radius:9px;
+  background:var(--gold);color:#080808;border:none;border-radius:9px;
   padding:11px 22px;font-size:11px;font-weight:800;letter-spacing:.1em;
   cursor:pointer;text-transform:uppercase;transition:opacity .12s,transform .1s;
 }
@@ -234,12 +220,12 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 #pg-finish{align-items:center;justify-content:center;gap:20px}
 .finish-ring{
   width:60px;height:60px;border-radius:50%;
-  background:var(--gold-dim);border:1px solid rgba(201,165,103,.2);
+  background:var(--gold2);border:1px solid rgba(212,175,112,.2);
   display:flex;align-items:center;justify-content:center;
 }
 .finish-ring svg{width:26px;height:26px;fill:var(--gold)}
 .finish-text{text-align:center}
-.finish-text h1{font-family:var(--film);font-style:italic;font-size:26px;font-weight:500;color:var(--gold);letter-spacing:.02em;margin-bottom:10px}
+.finish-text h1{font-size:20px;font-weight:300;font-style:italic;color:var(--gold);letter-spacing:.04em;margin-bottom:8px}
 .finish-text p{font-size:11px;color:var(--muted2);line-height:1.75;max-width:230px}
 .outline-btn{
   background:transparent;border:1px solid var(--border2);border-radius:10px;
@@ -250,7 +236,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 
 /* ─── FACE ID MODAL ─── */
 #pg-faceid{
-  background:rgba(5,5,7,.97);backdrop-filter:blur(20px);z-index:200;
+  background:rgba(4,4,6,.96);backdrop-filter:blur(20px);z-index:200;
   align-items:center;gap:14px;
   padding:calc(var(--safe-t)+18px) 18px calc(var(--safe-b)+18px);
 }
@@ -261,6 +247,11 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .fid-head p.found{color:#30d158}
 .fid-head p.err{color:#ff453a}
 
+/* Search input */
+.fid-search-row{
+  display:flex;width:100%;max-width:360px;gap:8px;
+  align-items:center;
+}
 .fid-search-info{
   font-size:10px;color:var(--muted2);text-align:center;max-width:360px;line-height:1.6;
 }
@@ -272,11 +263,6 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 }
 #fid-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
 #fid-canvas{position:absolute;inset:0;width:100%;height:100%}
-
-/* progress bar while scanning gallery */
-#fid-progress-wrap{width:100%;max-width:360px;height:3px;background:var(--s2);border-radius:3px;overflow:hidden;display:none}
-#fid-progress-wrap.show{display:block}
-#fid-progress-bar{height:100%;width:0%;background:var(--gold);transition:width .15s linear}
 
 /* Results */
 #fid-results{
@@ -297,7 +283,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .fid-result-info small{font-size:10px;color:var(--muted2)}
 .fid-result-badge{
   font-size:9px;font-weight:800;letter-spacing:.06em;
-  background:var(--gold-dim);color:var(--gold);
+  background:var(--gold2);color:var(--gold);
   border-radius:5px;padding:2px 6px;text-transform:uppercase;
 }
 
@@ -318,9 +304,8 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   background:var(--s2);color:#fff;transition:background .12s;
 }
 .fid-btn:active{background:var(--s3)}
-.fid-btn.gold{background:var(--gold);color:#0a0a0c;border-color:var(--gold)}
+.fid-btn.gold{background:var(--gold);color:#080808;border-color:var(--gold)}
 .fid-btn.gold:active{opacity:.85}
-.fid-btn:disabled{opacity:.5;pointer-events:none}
 
 /* loading spinner */
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -356,8 +341,6 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 <!-- ══════════ CAMERA ══════════ -->
 <div id="pg-cam" class="page">
   <div id="cam-vp">
-    <div class="film-strip left"><div class="film-strip-holes"></div></div>
-    <div class="film-strip right"><div class="film-strip-holes"></div></div>
     <div class="vp-fade-top"></div>
     <div class="vp-fade-bot"></div>
     <video id="vid-main" autoplay muted playsinline></video>
@@ -367,16 +350,13 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
       <button class="ico-btn" id="btn-flip" onclick="flipCam()">
         <svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       </button>
-      <div class="cam-bar-center">
-        <span class="frame-no" id="lbl-frame">No. 01</span>
-        <span class="facing-lbl" id="lbl-facing">FRONT</span>
-      </div>
+      <span class="cam-bar-center" id="lbl-facing">FRONT</span>
       <button class="ico-btn" id="btn-filter" onclick="toggleFilterPanel()">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
       </button>
     </div>
 
-    <!-- Filter panel (closed until tapped) -->
+    <!-- Filter panel (hidden by default) -->
     <div id="filter-panel">
       <div class="filter-row" id="filter-row">
         <!-- JS render -->
@@ -467,10 +447,10 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 <!-- ══════════ FACE ID SEARCH ══════════ -->
 <div id="pg-faceid" class="page off">
   <div class="fid-head">
-    <h2>Find My Photos</h2>
+    <h2>Face Search</h2>
     <p id="fid-status">Point your face at the camera</p>
   </div>
-  <p class="fid-search-info">Pindai wajahmu sekali, dan kami akan otomatis mencarikan semua fotomu dari seluruh galeri — tanpa perlu mencari satu per satu.</p>
+  <p class="fid-search-info">Scan your face to find all photos of you from the gallery automatically.</p>
 
   <div class="fid-cam-wrap">
     <video id="fid-vid" autoplay muted playsinline></video>
@@ -479,7 +459,6 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   </div>
 
   <div class="fid-badges" id="fid-badges"></div>
-  <div id="fid-progress-wrap"><div id="fid-progress-bar"></div></div>
   <div id="fid-results"></div>
 
   <div class="fid-actions">
@@ -505,43 +484,37 @@ const SB = window.supabase.createClient(
 const MAX_PHOTOS = 20;
 const MODEL_URL  = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights";
 
-/* ════ FILTERS ════
-   1. Classic 35mm   — analog film, kontras hangat
-   2. Vintage 90s     — retro semburat hijau/biru kamera saku jadul
-   3. Disposable      — washed out, saturasi merah/kuning khas disposable cam
-   4. BW Noir         — hitam putih kontras tinggi, deep shadows
-   5. Warm Retro       — warm tone/amber kuat dan estetik
-*/
+/* ════ FILTERS ════ */
 const FILTERS = [
   {
     id:"classic35",name:"Classic 35mm",
-    css:"contrast(115%) brightness(101%) saturate(112%) sepia(10%) hue-rotate(-4deg)",
-    canvas:"contrast(115%) brightness(101%) saturate(112%) sepia(10%) hue-rotate(-4deg)",
-    grain:true,vignette:true,vigAmt:.32,grainAmt:14
+    css:"contrast(108%) brightness(98%) saturate(90%) sepia(18%) hue-rotate(5deg)",
+    canvas:"contrast(108%) brightness(98%) saturate(90%) sepia(18%) hue-rotate(5deg)",
+    grain:true,vignette:true,vigAmt:.35
   },
   {
     id:"vintage90",name:"Vintage 90s",
-    css:"saturate(78%) contrast(96%) brightness(103%) sepia(8%) hue-rotate(150deg)",
-    canvas:"saturate(78%) contrast(96%) brightness(103%) sepia(8%) hue-rotate(150deg)",
-    grain:true,vignette:false,grainAmt:8,tint:"rgba(70,120,130,0.10)"
+    css:"saturate(70%) contrast(100%) brightness(102%) hue-rotate(170deg) sepia(15%)",
+    canvas:"saturate(70%) contrast(100%) brightness(102%) hue-rotate(170deg) sepia(15%)",
+    grain:false,vignette:false
   },
   {
     id:"disposable",name:"Disposable",
-    css:"saturate(125%) contrast(90%) brightness(110%) sepia(28%) hue-rotate(-10deg)",
-    canvas:"saturate(125%) contrast(90%) brightness(110%) sepia(28%) hue-rotate(-10deg)",
-    grain:true,vignette:true,vigAmt:.38,grainAmt:20,tint:"rgba(255,150,60,0.08)"
+    css:"saturate(115%) contrast(92%) brightness(108%) sepia(22%) hue-rotate(-8deg)",
+    canvas:"saturate(115%) contrast(92%) brightness(108%) sepia(22%) hue-rotate(-8deg)",
+    grain:true,vignette:true,vigAmt:.4
   },
   {
     id:"bwnoir",name:"BW Noir",
-    css:"grayscale(100%) contrast(145%) brightness(86%)",
-    canvas:"grayscale(100%) contrast(145%) brightness(86%)",
-    grain:true,vignette:true,vigAmt:.5,grainAmt:16
+    css:"grayscale(100%) contrast(135%) brightness(88%)",
+    canvas:"grayscale(100%) contrast(135%) brightness(88%)",
+    grain:true,vignette:true,vigAmt:.5
   },
   {
     id:"warmretro",name:"Warm Retro",
-    css:"sepia(52%) contrast(98%) brightness(104%) saturate(135%) hue-rotate(-6deg)",
-    canvas:"sepia(52%) contrast(98%) brightness(104%) saturate(135%) hue-rotate(-6deg)",
-    grain:false,vignette:true,vigAmt:.28,tint:"rgba(180,110,40,0.10)"
+    css:"sepia(45%) contrast(95%) brightness(105%) saturate(80%) hue-rotate(-5deg)",
+    canvas:"sepia(45%) contrast(95%) brightness(105%) saturate(80%) hue-rotate(-5deg)",
+    grain:false,vignette:true,vigAmt:.3
   }
 ];
 
@@ -553,7 +526,6 @@ let filterIdx = 0;
 let filterOpen = false;
 let thumbRaf = null;
 let thumbCanvases = [];
-let isCapturing = false; // guard against double-tap while not blocking the shutter feel
 
 /* ════ NAVIGATION ════ */
 function goTo(id, cb) {
@@ -566,18 +538,12 @@ function goTo(id, cb) {
 function goCamera() {
   count = 0;
   document.getElementById('cnt-n').textContent = '0';
-  updateFrameLabel();
   goTo('pg-cam');
   startCamera();
 }
 
 function restartApp() {
   goCamera();
-}
-
-function updateFrameLabel() {
-  const n = String(count+1).padStart(2,'0');
-  document.getElementById('lbl-frame').textContent = `No. ${n}`;
 }
 
 /* ════ CAMERA ════ */
@@ -608,7 +574,21 @@ function flipCam() {
   startCamera();
 }
 
-/* ════ FILTER PANEL — only visible after tapping the filter icon ════ */
+/* ════ FLASH — blink only ════ */
+// Flash is never "on" permanently — only blinks at capture
+// The flash button just cycles a visual indicator for user preference
+let flashPref = "auto"; // auto|on|off
+const FLASH_CYCLE = ["auto","on","off"];
+const FLASH_ICONS = {
+  auto:'<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><title>Auto</title></svg>',
+  on:'<svg viewBox="0 0 24 24" style="color:var(--gold)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/></svg>',
+  off:'<svg viewBox="0 0 24 24" style="color:var(--muted)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+};
+// Flash button not in toolbar anymore — handled via icon in cam-bar slot
+// We re-use the filter btn slot; flip btn is separate
+// Actually we keep it simple: no explicit flash UI, auto-flash always blinks at capture
+
+/* ════ FILTER PANEL ════ */
 function buildFilterStrip() {
   const row = document.getElementById('filter-row');
   row.innerHTML = "";
@@ -646,9 +626,7 @@ function buildFilterStrip() {
 }
 
 function drawThumbs() {
-  // Only render the live thumbnails while the filter panel is actually open —
-  // saves work the rest of the time since they're invisible otherwise.
-  if (filterOpen && vidMain.readyState >= 2) {
+  if (vidMain.readyState >= 2) {
     thumbCanvases.forEach(cvs => {
       const ctx = cvs.getContext('2d');
       ctx.save();
@@ -670,52 +648,49 @@ function selectFilter(i) {
   filterIdx = i;
   applyVideoFilter(i);
   document.querySelectorAll('.f-item').forEach((el,j)=>el.classList.toggle('sel',j===i));
-  // Close panel after a short beat so the choice feels confirmed
+  // Close panel after selection
   setTimeout(()=>{
     filterOpen = false;
     document.getElementById('filter-panel').classList.remove('open');
     document.getElementById('btn-filter').classList.remove('lit');
-  }, 280);
+  }, 300);
 }
 
 function applyVideoFilter(i) {
   vidMain.style.filter = FILTERS[i].css || "";
 }
 
-/* ════ CAPTURE — instant, never blocks on flash or upload ════ */
+/* ════ CAPTURE — non-blocking ════ */
 function capture() {
   if (count >= MAX_PHOTOS) { goTo('pg-gallery', loadGallery); return; }
-  if (isCapturing) return; // tiny debounce so one tap = one photo
-  isCapturing = true;
 
-  const shutterEl = document.getElementById('shutter');
-  shutterEl.classList.add('busy');
+  // Flash blink — front cam: white overlay, back cam: torch blink
+  const isBack = facing==="environment";
 
-  // Flash: a true blink, never a sustained "on" state.
-  if (facing==="environment") blinkTorch(); else blinkScreen();
+  if (isBack) {
+    blinkTorch();
+  } else {
+    blinkScreen();
+  }
 
-  // Snapshot immediately — capture happens this frame, upload happens after.
+  // Capture immediately — don't wait for flash animation to complete
   snapshotAndUpload();
-
-  setTimeout(()=>{ shutterEl.classList.remove('busy'); isCapturing=false; }, 260);
 }
 
 function blinkScreen() {
   const fl = document.getElementById('flash-ov');
   fl.style.opacity = "1";
-  setTimeout(() => { fl.style.opacity = "0"; }, 90);
+  setTimeout(() => { fl.style.opacity = "0"; }, 120);
 }
 
 async function blinkTorch() {
   if (!stream) return;
   const vt = stream.getVideoTracks()[0];
   const cap = vt.getCapabilities?.() || {};
-  if (!cap.torch) { blinkScreen(); return; } // device has no torch control — fall back
+  if (!cap.torch) { blinkScreen(); return; } // fallback
   try {
     await vt.applyConstraints({advanced:[{torch:true}]});
-    setTimeout(async()=>{
-      try{ await vt.applyConstraints({advanced:[{torch:false}]}); }catch{}
-    }, 140); // short blink only — always turned back off
+    setTimeout(async()=>{ try{ await vt.applyConstraints({advanced:[{torch:false}]}); }catch{} }, 200);
   } catch { blinkScreen(); }
 }
 
@@ -733,31 +708,24 @@ async function snapshotAndUpload() {
   ctx.drawImage(vidMain, 0, 0, W, H);
   ctx.restore();
 
-  if (f.tint) addTint(ctx, W, H, f.tint);
-  if (f.grain) addGrain(ctx, W, H, f.grainAmt||14);
+  if (f.grain) addGrain(ctx, W, H, 16);
   if (f.vignette) addVignette(ctx, W, H, f.vigAmt||.4);
 
-  // Counter advances right away — the photographer keeps shooting,
-  // the upload happens quietly in the background with no blocking UI.
+  // Increment counter immediately — don't wait for upload
   count++;
   document.getElementById('cnt-n').textContent = count;
-  updateFrameLabel();
   if (count >= MAX_PHOTOS) {
-    setTimeout(()=>{ goTo('pg-gallery', loadGallery); }, 320);
+    setTimeout(()=>{ goTo('pg-gallery', loadGallery); }, 400);
   }
 
+  // Upload in background
   cvs.toBlob(async blob => {
     if (!blob) return;
     const name = `photo_${Date.now()}_${Math.random().toString(36).slice(2,7)}.jpg`;
     const { error } = await SB.storage.from('galeri-foto').upload(name, blob, {contentType:'image/jpeg'});
-    if (error) toast('Upload gagal','err');
-    // Success uploads stay silent — no "saved" text interrupting the shoot.
+    if (error) { toast('Upload failed','err'); }
+    else { toast('✓ Saved','ok'); }
   }, 'image/jpeg', 0.92);
-}
-
-function addTint(ctx, w, h, rgba) {
-  ctx.fillStyle = rgba;
-  ctx.fillRect(0,0,w,h);
 }
 
 function addGrain(ctx, w, h, amt) {
@@ -781,33 +749,25 @@ function addVignette(ctx, w, h, strength) {
 }
 
 /* ════ GALLERY ════ */
-let galleryData = []; // cache of {name,url}
+let galleryData = []; // cache public URLs
 
 async function loadGallery() {
   const grid = document.getElementById('gl-grid');
   grid.innerHTML = `<div class="gl-empty"><p style="color:var(--muted2);font-size:12px">Loading…</p></div>`;
 
-  // Don't sort server-side by created_at — list() doesn't support it reliably.
-  // Sort client-side by the timestamp embedded in our own filenames instead.
-  const { data, error } = await SB.storage.from('galeri-foto').list('', { limit:1000 });
+  const { data, error } = await SB.storage.from('galeri-foto').list('', {
+    limit:100, sortBy:{column:'created_at',order:'desc'}
+  });
 
   if (error||!data?.length) {
     grid.innerHTML = `<div class="gl-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p>No photos yet</p></div>`;
-    galleryData = [];
     return;
   }
-
-  const files = data.filter(f=>f.name!=='.emptyFolderPlaceholder');
-  files.sort((a,b)=>{
-    const ta = parseInt((a.name.match(/photo_(\d+)_/)||[])[1]||0);
-    const tb = parseInt((b.name.match(/photo_(\d+)_/)||[])[1]||0);
-    return tb-ta;
-  });
 
   galleryData = [];
   grid.innerHTML = "";
 
-  files.forEach(file => {
+  data.filter(f=>f.name!=='.emptyFolderPlaceholder').forEach(file => {
     const {data:pu} = SB.storage.from('galeri-foto').getPublicUrl(file.name);
     galleryData.push({name:file.name, url:pu.publicUrl});
 
@@ -818,6 +778,7 @@ async function loadGallery() {
     grid.appendChild(el);
   });
 
+  // Update gallery thumb
   if (galleryData.length) {
     const btn = document.getElementById('gthumb');
     btn.innerHTML = `<img src="${galleryData[0].url}">`;
@@ -858,21 +819,18 @@ function toast(msg, type='ok') {
 }
 
 /* ════════════════════════════════════════════
-   FACE SEARCH — scan your face once, find every
-   photo of you across the whole gallery automatically.
-   Descriptors are cached per-photo so re-scans (or a
-   second person scanning) don't recompute work already done.
+   FACE ID SEARCH — scan face → find matching photos
 ════════════════════════════════════════════ */
 let fidStream = null;
+let fidRaf    = null;
 let fidLoaded = false;
 let fidDetectRaf = null;
 let capturedDescriptor = null;
 let isFidScanning = false;
-const descriptorCache = new Map(); // photo url -> [descriptors] (computed once per session)
 
 async function loadFaceModels() {
   if (fidLoaded) return true;
-  setFidStatus("Memuat model AI… (hanya pertama kali)");
+  setFidStatus("Loading AI models… (first time only)");
   try {
     await Promise.all([
       faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
@@ -885,7 +843,7 @@ async function loadFaceModels() {
     return true;
   } catch(e) {
     console.error("Model load error:", e);
-    setFidStatus("Gagal memuat model AI.", true);
+    setFidStatus("Failed to load AI models.", true);
     return false;
   }
 }
@@ -893,29 +851,29 @@ async function loadFaceModels() {
 function setFidStatus(txt, isErr=false) {
   const el = document.getElementById('fid-status');
   el.textContent = txt;
-  el.className = isErr ? "err" : (/found|ditemukan|✓/i.test(txt) ? "found" : "");
+  el.className = isErr ? "err" : (txt.includes("found") || txt.includes("✓") ? "found" : "");
 }
 
 async function startFaceID() {
+  // Reset
   capturedDescriptor = null;
   document.getElementById('fid-badges').innerHTML = "";
   document.getElementById('fid-results').innerHTML = "";
   document.getElementById('btn-do-search').style.display = "none";
   document.getElementById('scan-line').classList.remove('active');
-  document.getElementById('fid-progress-wrap').classList.remove('show');
 
-  setFidStatus("Memuat model AI…");
+  setFidStatus("Loading AI models…");
 
   const ok = await loadFaceModels();
   if (!ok) return;
 
-  setFidStatus("Membuka kamera…");
+  setFidStatus("Starting camera…");
   try {
     fidStream = await navigator.mediaDevices.getUserMedia({
       video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false
     });
   } catch {
-    setFidStatus("Akses kamera ditolak.", true);
+    setFidStatus("Camera access denied.", true);
     return;
   }
 
@@ -923,7 +881,7 @@ async function startFaceID() {
   vid.srcObject = fidStream;
   await vid.play();
 
-  setFidStatus("Arahkan wajahmu ke kamera…");
+  setFidStatus("Point your face at the camera to scan…");
   isFidScanning = true;
   runFidDetect();
 }
@@ -956,7 +914,7 @@ async function runFidDetect() {
     ctx.scale(-1, 1);
 
     if (!dets.length) {
-      setFidStatus("Wajah tidak terdeteksi — coba mendekat…");
+      setFidStatus("No face detected — move closer…");
       document.getElementById('btn-do-search').style.display = "none";
       document.getElementById('fid-badges').innerHTML = "";
       capturedDescriptor = null;
@@ -965,13 +923,15 @@ async function runFidDetect() {
         const b  = det.detection.box;
         const bx = b.x*sx, by=b.y*sy, bw=b.width*sx, bh=b.height*sy;
 
-        ctx.strokeStyle = "#C9A567";
+        // Box
+        ctx.strokeStyle = "#D4AF70";
         ctx.lineWidth   = 1.5;
         ctx.setLineDash([]);
         ctx.strokeRect(bx, by, bw, bh);
 
+        // Corner markers
         const cs = 14;
-        ctx.strokeStyle = "#C9A567";
+        ctx.strokeStyle = "#D4AF70";
         ctx.lineWidth   = 2.8;
         [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([cx,cy,dx,dy])=>{
           ctx.beginPath();
@@ -981,7 +941,8 @@ async function runFidDetect() {
           ctx.stroke();
         });
 
-        ctx.fillStyle = "rgba(201,165,103,.5)";
+        // Landmarks
+        ctx.fillStyle = "rgba(212,175,112,.5)";
         det.landmarks.positions.forEach(p => {
           ctx.beginPath();
           ctx.arc(p.x*sx, p.y*sy, 1.3, 0, Math.PI*2);
@@ -989,19 +950,20 @@ async function runFidDetect() {
         });
       });
 
+      // Take first face descriptor
       capturedDescriptor = dets[0].descriptor;
-      const g   = dets[0].gender==="male"?"Pria":"Wanita";
+      const g   = dets[0].gender==="male"?"Male":"Female";
       const age = Math.round(dets[0].age);
-      const EXP = {happy:"Senang",sad:"Sedih",angry:"Marah",fearful:"Takut",disgusted:"Jijik",surprised:"Terkejut",neutral:"Netral"};
+      const EXP = {happy:"Happy",sad:"Sad",angry:"Angry",fearful:"Fearful",disgusted:"Disgusted",surprised:"Surprised",neutral:"Neutral"};
       const topExp = Object.entries(dets[0].expressions).sort((a,b)=>b[1]-a[1])[0];
       const expLbl = EXP[topExp[0]] || topExp[0];
 
       document.getElementById('fid-badges').innerHTML = `
         <div class="fid-badge">
-          <b>${g}, ~${age} thn</b>
+          <b>${g}, ~${age} yrs</b>
           <small>${expLbl}</small>
         </div>`;
-      setFidStatus("Wajah tertangkap ✓ — tekan Search My Photos");
+      setFidStatus("Face captured ✓ — press Search My Photos");
       document.getElementById('btn-do-search').style.display = "block";
       document.getElementById('scan-line').classList.add('active');
     }
@@ -1013,64 +975,48 @@ async function runFidDetect() {
   fidDetectRaf = requestAnimationFrame(detect);
 }
 
-/* Search the entire gallery — every photo, not a manual scroll-through —
-   for faces matching the one just scanned. Descriptors are cached so a
-   re-search (or another guest's scan) skips photos already processed. */
+/* Search gallery photos for matching faces */
 async function doFaceSearch() {
-  if (!capturedDescriptor) { setFidStatus("Pindai wajahmu terlebih dahulu."); return; }
-  if (!galleryData.length) { await loadGallery(); }
-  if (!galleryData.length) { setFidStatus("Galeri masih kosong.", true); return; }
+  if (!capturedDescriptor) { setFidStatus("Please scan your face first."); return; }
 
-  const total = galleryData.length;
-  const progWrap = document.getElementById('fid-progress-wrap');
-  const progBar  = document.getElementById('fid-progress-bar');
-  progWrap.classList.add('show');
-  progBar.style.width = "0%";
-
+  setFidStatus(`🔍 Scanning ${galleryData.length} photos…`);
   document.getElementById('fid-results').innerHTML = "";
-  const btn = document.getElementById('btn-do-search');
-  btn.textContent = "Mencari…";
-  btn.disabled = true;
+  document.getElementById('btn-do-search').textContent = "Searching…";
+  document.getElementById('btn-do-search').disabled = true;
 
-  const THRESHOLD = 0.52;
+  const THRESHOLD = 0.52; // face distance threshold
   const matches   = [];
 
-  for (let i=0; i<total; i++) {
-    setFidStatus(`Memeriksa foto ${i+1} dari ${total}…`);
-    progBar.style.width = `${Math.round(((i+1)/total)*100)}%`;
-
-    const url = galleryData[i].url;
+  for (let i=0; i<galleryData.length; i++) {
+    setFidStatus(`Scanning photo ${i+1} of ${galleryData.length}…`);
     try {
-      let descs = descriptorCache.get(url);
-      if (!descs) {
-        const img = await loadImg(url);
-        const dets = await faceapi
-          .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({minConfidence:.45}))
-          .withFaceLandmarks()
-          .withFaceDescriptors();
-        descs = dets.map(d=>d.descriptor);
-        descriptorCache.set(url, descs); // cache so future scans skip this photo entirely
-      }
+      const img = await loadImg(galleryData[i].url);
+      const dets = await faceapi
+        .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({minConfidence:.45}))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
-      for (const d of descs) {
-        const dist = faceapi.euclideanDistance(capturedDescriptor, d);
-        if (dist < THRESHOLD) { matches.push({url, dist}); break; }
+      for (const det of dets) {
+        const dist = faceapi.euclideanDistance(capturedDescriptor, det.descriptor);
+        if (dist < THRESHOLD) {
+          matches.push({url: galleryData[i].url, dist});
+          break; // one match per photo is enough
+        }
       }
-    } catch(e) { /* unreadable photo — skip and continue */ }
+    } catch(e) { /* skip unloadable */ }
   }
 
-  btn.textContent = "Search My Photos";
-  btn.disabled = false;
-  progWrap.classList.remove('show');
+  document.getElementById('btn-do-search').textContent = "Search My Photos";
+  document.getElementById('btn-do-search').disabled = false;
 
   if (!matches.length) {
-    setFidStatus("Tidak ada foto yang cocok ditemukan.", true);
-    document.getElementById('fid-results').innerHTML = `<div class="fid-badge" style="width:100%;text-align:center;padding:12px 0"><small>Tidak ada foto yang cocok dengan wajahmu</small></div>`;
+    setFidStatus("No matching photos found.", true);
+    document.getElementById('fid-results').innerHTML = `<div class="fid-badge" style="width:100%;text-align:center;padding:12px 0"><small>No photos matched your face</small></div>`;
     return;
   }
 
   matches.sort((a,b)=>a.dist-b.dist);
-  setFidStatus(`✓ Ditemukan ${matches.length} foto dirimu!`, false);
+  setFidStatus(`✓ Found ${matches.length} photo${matches.length>1?'s':''} of you!`, false);
   document.getElementById('fid-status').className = "found";
 
   const res = document.getElementById('fid-results');
@@ -1082,8 +1028,8 @@ async function doFaceSearch() {
     el.innerHTML = `
       <img class="fid-result-img" src="${m.url}">
       <div class="fid-result-info">
-        <p>Foto cocok #${i+1}</p>
-        <small>Kecocokan: ${pct}%</small>
+        <p>Photo match #${i+1}</p>
+        <small>Confidence: ${pct}%</small>
       </div>
       <span class="fid-result-badge">${pct}%</span>`;
     el.onclick = () => {
@@ -1116,7 +1062,6 @@ function closeFaceID() {
   document.getElementById('scan-line').classList.remove('active');
   document.getElementById('fid-badges').innerHTML = "";
   document.getElementById('fid-results').innerHTML = "";
-  document.getElementById('fid-progress-wrap').classList.remove('show');
   capturedDescriptor = null;
   goTo('pg-gallery');
 }
@@ -1124,7 +1069,6 @@ function closeFaceID() {
 /* ════ INIT ════ */
 window.addEventListener('DOMContentLoaded', () => {
   buildFilterStrip();
-  updateFrameLabel();
   startCamera();
 });
 </script>
