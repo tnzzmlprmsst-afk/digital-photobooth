@@ -3,830 +3,833 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Booth — Zuzu & Zaza</title>
+<title>Booth — Zuzu &amp; Zaza</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0C0C0E;color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-
-/* ── TOKENS ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0a0a0c;color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 :root{
-  --void:#0C0C0E;
-  --surface:#141418;
-  --elevated:#1E1E26;
-  --border:rgba(255,255,255,0.07);
-  --border-hi:rgba(255,255,255,0.14);
-  --ivory:#E8DCC8;
-  --ivory-dim:rgba(232,220,200,0.5);
-  --white:#FFFFFF;
-  --muted:#6B6B7A;
-  --red:#FF3B30;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bot:env(safe-area-inset-bottom,0px);
+  --bg:#0a0a0c;
+  --s1:#111113;
+  --s2:#17171a;
+  --s3:#212126;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.12);
+  --gold:#C9A567;
+  --gold-dim:rgba(201,165,103,0.18);
+  --ember:#8B5E3C;
+  --muted:#52525e;
+  --muted2:#76747e;
+  --film:'Cormorant Garamond',serif;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
 }
 
-/* ── LAYOUT ── */
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:1;transition:opacity .18s ease}
-.screen.hidden{opacity:0;pointer-events:none;display:none}
+/* ─── PAGES ─── */
+.page{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:opacity .2s ease,transform .2s ease}
+.page.off{opacity:0;pointer-events:none;transform:translateY(6px);display:none}
 
-/* ── CAM PAGE ── */
-#cam-page{background:var(--void)}
+/* ─── CAMERA PAGE ─── */
+#pg-cam{background:#000}
 
-.cam-topbar{
-  position:relative;z-index:30;
+#cam-vp{position:absolute;inset:0;overflow:hidden}
+#cam-vp video{width:100%;height:100%;object-fit:cover;display:block;will-change:transform}
+
+/* film sprocket strip — signature element */
+.film-strip{position:absolute;top:0;bottom:0;width:14px;z-index:3;pointer-events:none;opacity:.55}
+.film-strip.left{left:0}
+.film-strip.right{right:0}
+.film-strip-holes{position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 10px,rgba(0,0,0,.55) 10px,rgba(0,0,0,.55) 16px);}
+.film-strip-holes::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 12px, rgba(255,255,255,.06) 12px, rgba(255,255,255,.06) 13px, transparent 13px, transparent 16px)}
+
+/* Gradient overlays */
+.vp-fade-top{position:absolute;inset:0 0 auto 0;height:170px;background:linear-gradient(to bottom,rgba(0,0,0,.75) 0%,transparent 100%);pointer-events:none;z-index:2}
+.vp-fade-bot{position:absolute;inset:auto 0 0 0;height:230px;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 100%);pointer-events:none;z-index:2}
+
+/* Top bar */
+.cam-bar{
+  position:absolute;top:0;left:0;right:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
-  padding:calc(var(--safe-top) + 14px) 20px 14px;
-  background:linear-gradient(to bottom,rgba(12,12,14,0.9) 0%,transparent 100%);
+  padding:calc(var(--safe-t) + 16px) 22px 16px;
 }
-.cam-topbar-title{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
-.topbar-btn{
-  width:36px;height:36px;border-radius:50%;
-  background:rgba(255,255,255,0.06);border:1px solid var(--border);
+.cam-bar-center{
+  position:absolute;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+}
+.cam-bar-center .frame-no{font-family:var(--film);font-style:italic;font-size:15px;color:var(--gold);letter-spacing:.02em;line-height:1}
+.cam-bar-center .facing-lbl{font-size:9px;font-weight:700;letter-spacing:.18em;color:rgba(255,255,255,.38);text-transform:uppercase;margin-top:2px}
+
+.ico-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,.1);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:background .15s,transform .1s;color:var(--ivory);
+  transition:background .15s,transform .08s;position:relative;
 }
-.topbar-btn:active{transform:scale(.88);background:rgba(255,255,255,0.12)}
-.topbar-btn.active{background:rgba(232,220,200,0.15);border-color:var(--ivory-dim);color:var(--ivory)}
-.topbar-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ico-btn:active{transform:scale(.85);background:rgba(255,255,255,.15)}
+.ico-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:rgba(255,255,255,.85)}
+.ico-btn.lit{background:var(--gold-dim);border-color:rgba(201,165,103,.35)}
+.ico-btn.lit svg{color:var(--gold)}
+.flash-dot{
+  position:absolute;top:6px;right:6px;
+  width:5px;height:5px;border-radius:50%;
+  background:var(--gold);display:none;
+}
+.ico-btn.lit .flash-dot{display:block}
 
-/* Camera viewport */
-#cam-viewport{
-  position:relative;flex:1;overflow:hidden;
-  background:#000;
+/* Filter panel — closed by default, opens only on tap */
+#filter-panel{
+  position:absolute;bottom:106px;left:0;right:0;z-index:8;
+  padding:0 0 10px;
+  max-height:0;opacity:0;pointer-events:none;overflow:hidden;
+  transition:max-height .26s cubic-bezier(.4,0,.2,1),opacity .2s;
 }
-#video-main{
-  width:100%;height:100%;object-fit:cover;
-  display:block;
-}
-.cam-vp-gradient-top{
-  position:absolute;inset:0 0 auto 0;height:90px;
-  background:linear-gradient(to bottom,rgba(0,0,0,.5),transparent);
-  pointer-events:none;z-index:2;
-}
-.cam-vp-gradient-bot{
-  position:absolute;inset:auto 0 0 0;height:200px;
-  background:linear-gradient(to top,rgba(0,0,0,.65),transparent);
-  pointer-events:none;z-index:2;
-}
-
-/* Filter strip — overlay di atas gradient bawah */
-#filter-strip-wrap{
-  position:absolute;bottom:88px;left:0;right:0;z-index:10;
-  padding:0 16px 6px;
-}
-.filter-strip{
-  display:flex;gap:9px;overflow-x:auto;padding:4px 2px 8px;
-  scroll-snap-type:x mandatory;
+#filter-panel.open{max-height:140px;opacity:1;pointer-events:all}
+.filter-row{
+  display:flex;gap:10px;padding:8px 18px 4px;
+  overflow-x:auto;scroll-snap-type:x mandatory;
   -ms-overflow-style:none;scrollbar-width:none;
 }
-.filter-strip::-webkit-scrollbar{display:none}
-.filter-item{
-  flex:0 0 auto;scroll-snap-align:start;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  transition:transform .15s;
+.filter-row::-webkit-scrollbar{display:none}
+.f-item{
+  flex:0 0 auto;scroll-snap-align:start;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  cursor:pointer;transition:transform .12s;
 }
-.filter-item:active{transform:scale(.92)}
-.filter-thumb{
-  width:52px;height:68px;border-radius:10px;overflow:hidden;
+.f-item:active{transform:scale(.9)}
+.f-thumb{
+  width:56px;height:72px;border-radius:11px;overflow:hidden;
   position:relative;border:2px solid transparent;
-  transition:border-color .2s,box-shadow .2s;
-  background:#1a1a1f;
+  transition:border-color .18s,box-shadow .18s;background:#1a1a1a;
 }
-.filter-item.selected .filter-thumb{
-  border-color:var(--ivory);
-  box-shadow:0 0 0 1px rgba(232,220,200,0.25);
-}
-.filter-thumb video,.filter-thumb canvas{
-  width:100%;height:100%;object-fit:cover;display:block;
-}
-.filter-thumb-label{
+.f-item.sel .f-thumb{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,165,103,.3)}
+.f-thumb canvas{width:100%;height:100%;object-fit:cover;display:block}
+.f-thumb-label{
   position:absolute;bottom:0;left:0;right:0;
-  padding:3px 4px 4px;
-  background:rgba(0,0,0,0.55);
-  backdrop-filter:blur(4px);
-  text-align:center;
-  font-size:8px;font-weight:600;letter-spacing:.04em;
-  color:#fff;line-height:1.2;
+  padding:4px 3px 5px;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
+  font-size:7.5px;font-weight:700;color:#fff;text-align:center;
+  letter-spacing:.02em;line-height:1.1;
 }
-.filter-name{
-  font-size:9px;font-weight:500;color:rgba(255,255,255,0.5);
-  letter-spacing:.03em;white-space:nowrap;
-  transition:color .2s;
-}
-.filter-item.selected .filter-name{color:var(--ivory)}
+.f-name{font-size:9px;font-weight:500;color:rgba(255,255,255,.45);letter-spacing:.02em;white-space:nowrap;transition:color .18s}
+.f-item.sel .f-name{color:var(--gold)}
 
 /* Bottom controls */
-.cam-controls{
+.cam-ctrls{
   position:absolute;bottom:0;left:0;right:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
-  padding:12px 28px calc(var(--safe-bot) + 24px);
+  padding:14px 28px calc(var(--safe-b) + 28px);
 }
-.ctrl-side{width:56px;display:flex;align-items:center;justify-content:center}
-.gallery-btn{
-  width:48px;height:48px;border-radius:12px;
-  background:rgba(255,255,255,0.07);border:1px solid var(--border-hi);
+.gallery-thumb{
+  width:46px;height:46px;border-radius:11px;
+  background:var(--s2);border:1px solid var(--border2);
   overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:transform .1s;
+  transition:transform .1s;flex-shrink:0;
 }
-.gallery-btn:active{transform:scale(.88)}
-.gallery-btn img{width:100%;height:100%;object-fit:cover}
-.gallery-btn svg{width:20px;height:20px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gallery-thumb:active{transform:scale(.88)}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover}
+.gallery-thumb svg{width:20px;height:20px;stroke:var(--muted2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-/* Shutter */
-.shutter-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 .shutter{
-  width:72px;height:72px;border-radius:50%;
-  background:transparent;
-  border:3px solid rgba(255,255,255,0.85);
-  padding:5px;cursor:pointer;
-  transition:transform .12s,opacity .12s;
-  position:relative;
+  width:76px;height:76px;border-radius:50%;
+  background:transparent;border:3px solid rgba(255,255,255,.9);
+  padding:6px;cursor:pointer;transition:transform .1s;flex-shrink:0;
 }
-.shutter:active .shutter-inner{transform:scale(.84)}
-.shutter-inner{
-  width:100%;height:100%;border-radius:50%;
-  background:#FFFFFF;
-  transition:transform .12s;
-}
+.shutter:active{transform:scale(.9)}
+.shutter-inner{width:100%;height:100%;border-radius:50%;background:#fff;transition:transform .1s}
+.shutter:active .shutter-inner{transform:scale(.88)}
+.shutter.busy{pointer-events:none}
+.shutter.busy .shutter-inner{background:var(--gold)}
 
-/* Counter badge — sebelah kanan shutter */
-.counter-badge{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:48px;height:48px;border-radius:12px;
-  background:rgba(255,255,255,0.06);border:1px solid var(--border);
+.counter-pill{
+  width:46px;height:46px;border-radius:11px;
+  background:var(--s2);border:1px solid var(--border2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;
 }
-.counter-num{font-size:16px;font-weight:800;color:#fff;line-height:1}
-.counter-tot{font-size:9px;font-weight:500;color:var(--muted);line-height:1;margin-top:2px}
+.counter-n{font-size:17px;font-weight:900;color:#fff;line-height:1}
+.counter-d{font-size:8px;font-weight:600;color:var(--muted);line-height:1;margin-top:2px}
 
-/* Flash overlay */
-#flash-overlay{
-  position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9999;
-  transition:opacity .06s;
-}
+/* Flash overlay — covers full viewport including safe areas, blink only */
+#flash-ov{position:fixed;top:-10vh;left:-10vw;right:-10vw;bottom:-10vh;background:#fff;opacity:0;pointer-events:none;z-index:9999;transition:opacity .04s linear}
 
-/* ── GALLERY PAGE ── */
-#gallery-page{background:var(--void);flex-direction:column}
-.gallery-topbar{
+/* ─── GALLERY PAGE ─── */
+#pg-gallery{padding-top:calc(var(--safe-t) + 0px)}
+.gl-top{
   display:flex;align-items:flex-start;justify-content:space-between;
-  padding:calc(var(--safe-top) + 20px) 24px 16px;
+  padding:20px 22px 14px;flex-shrink:0;
 }
-.gallery-title{font-size:26px;font-weight:900;letter-spacing:-.02em;color:#fff}
-.gallery-sub{font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--muted);margin-top:3px;text-transform:uppercase}
-.wedding-name{font-family:'Playfair Display',serif;font-size:13px;font-style:italic;color:var(--ivory);line-height:1.4}
-.gallery-grid-wrap{flex:1;overflow-y:auto;padding:0 16px 8px;-ms-overflow-style:none;scrollbar-width:none}
-.gallery-grid-wrap::-webkit-scrollbar{display:none}
-.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
-.gallery-item{aspect-ratio:3/4;background:var(--elevated);overflow:hidden;cursor:pointer;position:relative;transition:opacity .1s}
-.gallery-item:first-child{border-radius:12px 0 0 0}
-.gallery-item:nth-child(3){border-radius:0 12px 0 0}
-.gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
-.gallery-item:active{opacity:.75}
-.gallery-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--muted)}
-.gallery-empty svg{width:36px;height:36px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.gallery-empty p{font-size:12px;font-weight:500}
-.gallery-botbar{
+.gl-title-wrap h1{font-size:24px;font-weight:900;letter-spacing:-.02em}
+.gl-title-wrap p{font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--muted2);margin-top:3px;text-transform:uppercase}
+.gl-meta{text-align:right}
+.gl-meta-name{font-family:var(--film);font-style:italic;font-size:15px;font-weight:500;color:var(--gold);letter-spacing:.02em;line-height:1.45}
+.gl-meta-amp{font-size:9px;color:var(--muted);margin:1px 0}
+
+.scan-ico-btn{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--gold-dim);border:1px solid rgba(201,165,103,.25);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;transition:background .15s,transform .1s;margin-bottom:6px;
+}
+.scan-ico-btn:active{transform:scale(.88);background:rgba(201,165,103,.28)}
+.scan-ico-btn svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.scan-ico-btn span{font-size:7px;font-weight:800;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+
+.gl-grid-wrap{flex:1;overflow-y:auto;padding:0 3px;-ms-overflow-style:none;scrollbar-width:none}
+.gl-grid-wrap::-webkit-scrollbar{display:none}
+.gl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.gl-item{aspect-ratio:3/4;background:var(--s2);overflow:hidden;cursor:pointer;transition:opacity .1s}
+.gl-item:first-child{border-top-left-radius:10px}
+.gl-item:nth-child(3){border-top-right-radius:10px}
+.gl-item img{width:100%;height:100%;object-fit:cover;display:block}
+.gl-item:active{opacity:.7}
+.gl-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);grid-column:1/-1;height:260px}
+.gl-empty svg{width:32px;height:32px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.gl-empty p{font-size:12px;font-weight:500}
+
+.gl-bot{
   display:flex;align-items:center;justify-content:space-between;
-  padding:14px 24px calc(var(--safe-bot) + 20px);
-  border-top:1px solid var(--border);
+  padding:13px 22px calc(var(--safe-b) + 18px);
+  border-top:1px solid var(--border);flex-shrink:0;
 }
 .ghost-btn{
-  display:flex;align-items:center;gap:6px;background:none;border:none;
-  font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted);cursor:pointer;
-  text-transform:uppercase;transition:color .15s;
+  display:flex;align-items:center;gap:5px;background:none;border:none;
+  font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted2);
+  cursor:pointer;text-transform:uppercase;transition:color .12s;
 }
 .ghost-btn:active{color:#fff}
 .ghost-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.scan-btn{
-  width:40px;height:40px;border-radius:10px;
-  background:rgba(232,220,200,0.08);border:1px solid rgba(232,220,200,0.2);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;cursor:pointer;transition:background .15s,transform .1s;
+.prim-btn{
+  background:var(--gold);color:#0a0a0c;border:none;border-radius:9px;
+  padding:11px 22px;font-size:11px;font-weight:800;letter-spacing:.1em;
+  cursor:pointer;text-transform:uppercase;transition:opacity .12s,transform .1s;
 }
-.scan-btn:active{transform:scale(.88);background:rgba(232,220,200,0.16)}
-.scan-btn svg{width:18px;height:18px;stroke:var(--ivory);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.scan-btn span{font-size:7px;font-weight:700;letter-spacing:.1em;color:var(--ivory);text-transform:uppercase}
-.primary-btn{
-  background:var(--ivory);color:#0C0C0E;
-  border:none;border-radius:10px;
-  padding:11px 24px;font-size:11px;font-weight:800;
-  letter-spacing:.1em;cursor:pointer;text-transform:uppercase;
-  transition:opacity .15s,transform .1s;
-}
-.primary-btn:active{opacity:.8;transform:scale(.96)}
+.prim-btn:active{opacity:.85;transform:scale(.96)}
 
-/* ── SINGLE VIEW ── */
-#single-page{background:#000;flex-direction:column}
-.single-topbar{
-  display:flex;align-items:center;padding:calc(var(--safe-top)+14px) 20px 12px;
-  background:linear-gradient(to bottom,rgba(0,0,0,.8),transparent);
-  position:absolute;top:0;left:0;right:0;z-index:10;
-}
+/* ─── SINGLE VIEW ─── */
+#pg-single{background:#000;position:relative}
 #single-img{width:100%;height:100%;object-fit:contain;display:block}
-.single-botbar{
-  position:absolute;bottom:0;left:0;right:0;z-index:10;
-  padding:16px 20px calc(var(--safe-bot)+20px);
-  background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+.single-top{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  display:flex;align-items:center;
+  padding:calc(var(--safe-t)+14px) 18px 12px;
+  background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);
+}
+.single-bot{
+  position:absolute;bottom:0;left:0;right:0;z-index:5;
+  padding:14px 18px calc(var(--safe-b)+20px);
+  background:linear-gradient(to top,rgba(0,0,0,.7),transparent);
 }
 .dl-btn{
-  width:100%;background:rgba(255,255,255,0.1);
-  border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(12px);
-  border-radius:12px;padding:14px;
+  width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(14px);border-radius:12px;padding:14px;
   display:flex;align-items:center;justify-content:center;gap:8px;
   font-size:12px;font-weight:700;letter-spacing:.1em;color:#fff;
-  cursor:pointer;transition:background .15s;text-transform:uppercase;
+  cursor:pointer;text-transform:uppercase;transition:background .12s;
 }
-.dl-btn:active{background:rgba(255,255,255,0.18)}
-.dl-btn svg{width:16px;height:16px;stroke:var(--ivory);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dl-btn:active{background:rgba(255,255,255,.18)}
+.dl-btn svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-/* ── FINISH PAGE ── */
-#finish-page{background:var(--void);align-items:center;justify-content:center;gap:20px}
-.finish-heart{
-  width:64px;height:64px;border-radius:50%;
-  background:rgba(232,220,200,0.06);border:1px solid rgba(232,220,200,0.15);
+/* ─── FINISH ─── */
+#pg-finish{align-items:center;justify-content:center;gap:20px}
+.finish-ring{
+  width:60px;height:60px;border-radius:50%;
+  background:var(--gold-dim);border:1px solid rgba(201,165,103,.2);
   display:flex;align-items:center;justify-content:center;
 }
-.finish-heart svg{width:28px;height:28px;fill:var(--ivory);stroke:none}
-.finish-label{text-align:center}
-.finish-label h1{font-family:'Playfair Display',serif;font-size:22px;font-style:italic;color:var(--ivory);margin-bottom:8px}
-.finish-label p{font-size:11px;color:var(--muted);line-height:1.7;max-width:240px}
+.finish-ring svg{width:26px;height:26px;fill:var(--gold)}
+.finish-text{text-align:center}
+.finish-text h1{font-family:var(--film);font-style:italic;font-size:26px;font-weight:500;color:var(--gold);letter-spacing:.02em;margin-bottom:10px}
+.finish-text p{font-size:11px;color:var(--muted2);line-height:1.75;max-width:230px}
 .outline-btn{
-  background:transparent;border:1px solid var(--border-hi);
-  border-radius:10px;padding:12px 28px;
-  font-size:11px;font-weight:700;letter-spacing:.1em;color:#fff;
-  cursor:pointer;text-transform:uppercase;transition:background .15s,transform .1s;
+  background:transparent;border:1px solid var(--border2);border-radius:10px;
+  padding:12px 28px;font-size:11px;font-weight:700;letter-spacing:.1em;
+  color:#fff;cursor:pointer;text-transform:uppercase;transition:background .12s,transform .1s;
 }
 .outline-btn:active{background:rgba(255,255,255,.06);transform:scale(.96)}
 
-/* ── FACE ID MODAL ── */
-#faceid-modal{
-  position:fixed;inset:0;z-index:500;
-  background:rgba(0,0,0,.92);backdrop-filter:blur(16px);
-  display:flex;flex-direction:column;align-items:center;
-  padding:calc(var(--safe-top)+20px) 20px calc(var(--safe-bot)+20px);
-  gap:16px;opacity:0;pointer-events:none;transition:opacity .2s;
+/* ─── FACE ID MODAL ─── */
+#pg-faceid{
+  background:rgba(5,5,7,.97);backdrop-filter:blur(20px);z-index:200;
+  align-items:center;gap:14px;
+  padding:calc(var(--safe-t)+18px) 18px calc(var(--safe-b)+18px);
 }
-#faceid-modal.open{opacity:1;pointer-events:all}
-.fid-header{text-align:center}
-.fid-header h2{font-size:13px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#fff}
-.fid-header p{font-size:11px;color:var(--muted);margin-top:4px;min-height:16px}
+#pg-faceid.off{display:none}
+.fid-head{text-align:center}
+.fid-head h2{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#fff}
+.fid-head p{font-size:11px;color:var(--muted2);margin-top:5px;min-height:15px;transition:color .2s}
+.fid-head p.found{color:#30d158}
+.fid-head p.err{color:#ff453a}
+
+.fid-search-info{
+  font-size:10px;color:var(--muted2);text-align:center;max-width:360px;line-height:1.6;
+}
+
 .fid-cam-wrap{
-  position:relative;border-radius:20px;overflow:hidden;
-  width:100%;max-width:340px;
-  flex:1;max-height:440px;background:#111;
-  border:1px solid var(--border-hi);
+  position:relative;border-radius:18px;overflow:hidden;
+  width:100%;max-width:340px;flex:1;max-height:380px;
+  background:#0a0a0a;border:1px solid var(--border2);
 }
 #fid-video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
 #fid-canvas{position:absolute;inset:0;width:100%;height:100%}
-.fid-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:100%;max-width:340px}
-.fid-badge{
-  background:var(--elevated);border:1px solid var(--border-hi);
-  border-radius:10px;padding:8px 12px;text-align:center;
-  font-size:10px;color:var(--ivory);font-weight:600;line-height:1.6;
-}
-.fid-badge span{display:block;font-size:11px;font-weight:800;color:#fff}
-.fid-badge small{font-size:9px;color:var(--muted);font-weight:500}
-.fid-close{
-  background:var(--elevated);border:1px solid var(--border-hi);border-radius:10px;
-  padding:12px 32px;font-size:12px;font-weight:700;letter-spacing:.1em;
-  color:#fff;cursor:pointer;text-transform:uppercase;transition:background .15s;
-}
-.fid-close:active{background:rgba(255,255,255,.1)}
 
-/* ── UPLOAD TOAST ── */
+/* progress bar while scanning gallery */
+#fid-progress-wrap{width:100%;max-width:360px;height:3px;background:var(--s2);border-radius:3px;overflow:hidden;display:none}
+#fid-progress-wrap.show{display:block}
+#fid-progress-bar{height:100%;width:0%;background:var(--gold);transition:width .15s linear}
+
+/* Results */
+#fid-results{
+  width:100%;max-width:360px;flex-shrink:0;
+  max-height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;
+  -ms-overflow-style:none;scrollbar-width:none;
+}
+#fid-results::-webkit-scrollbar{display:none}
+.fid-result-item{
+  display:flex;align-items:center;gap:10px;
+  background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;
+  cursor:pointer;transition:background .12s;
+}
+.fid-result-item:active{background:var(--s3)}
+.fid-result-img{width:38px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.fid-result-info{flex:1}
+.fid-result-info p{font-size:11px;font-weight:600;color:#fff}
+.fid-result-info small{font-size:10px;color:var(--muted2)}
+.fid-result-badge{
+  font-size:9px;font-weight:800;letter-spacing:.06em;
+  background:var(--gold-dim);color:var(--gold);
+  border-radius:5px;padding:2px 6px;text-transform:uppercase;
+}
+
+.fid-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%;max-width:360px}
+.fid-badge{
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:9px;padding:7px 11px;text-align:center;
+  font-size:10px;color:var(--gold);font-weight:600;line-height:1.6;
+}
+.fid-badge b{display:block;font-size:11px;font-weight:800;color:#fff}
+.fid-badge small{font-size:9px;color:var(--muted2);font-weight:500}
+
+.fid-actions{display:flex;gap:8px;width:100%;max-width:360px}
+.fid-btn{
+  flex:1;border-radius:10px;padding:12px;
+  font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;
+  text-transform:uppercase;border:1px solid var(--border2);
+  background:var(--s2);color:#fff;transition:background .12s;
+}
+.fid-btn:active{background:var(--s3)}
+.fid-btn.gold{background:var(--gold);color:#0a0a0c;border-color:var(--gold)}
+.fid-btn.gold:active{opacity:.85}
+.fid-btn:disabled{opacity:.5;pointer-events:none}
+
+/* loading spinner */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .7s linear infinite;display:inline-block}
+
+/* scan line animation */
+@keyframes scanline{0%{top:0}100%{top:100%}}
+#scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(to right,transparent,var(--gold),transparent);
+  animation:scanline 2s linear infinite;z-index:5;opacity:.7;display:none;
+}
+#scan-line.active{display:block}
+
+/* toast */
 #toast{
-  position:fixed;bottom:calc(var(--safe-bot)+100px);left:50%;transform:translateX(-50%) translateY(10px);
-  background:var(--elevated);border:1px solid var(--border-hi);
-  border-radius:20px;padding:8px 14px;
-  display:flex;align-items:center;gap:8px;
+  position:fixed;bottom:calc(var(--safe-b)+96px);left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:rgba(24,24,28,.92);border:1px solid var(--border2);
+  backdrop-filter:blur(16px);border-radius:20px;
+  padding:7px 14px;display:flex;align-items:center;gap:7px;
   font-size:11px;font-weight:600;color:#fff;
-  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:800;
-  white-space:nowrap;
+  opacity:0;transition:opacity .18s,transform .18s;
+  pointer-events:none;z-index:800;white-space:nowrap;
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-#toast.ok{color:#34C759}#toast.ok svg{stroke:#34C759}
-#toast.loading{color:var(--ivory)}
-@keyframes spin{to{transform:rotate(360deg)}}
-#toast.loading svg{animation:spin .8s linear infinite}
+#toast svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 </style>
 </head>
 <body>
-<div id="flash-overlay"></div>
+<div id="flash-ov"></div>
 
-<!-- ══ CAM PAGE ══ -->
-<div id="cam-page" class="screen">
-  <div id="cam-viewport">
-    <div class="cam-vp-gradient-top"></div>
+<!-- ══════════ CAMERA ══════════ -->
+<div id="pg-cam" class="page">
+  <div id="cam-vp">
+    <div class="film-strip left"><div class="film-strip-holes"></div></div>
+    <div class="film-strip right"><div class="film-strip-holes"></div></div>
+    <div class="vp-fade-top"></div>
+    <div class="vp-fade-bot"></div>
+    <video id="vid-main" autoplay muted playsinline></video>
 
-    <!-- Top bar INSIDE viewport as overlay -->
-    <div class="cam-topbar" style="position:absolute;top:0;left:0;right:0;z-index:20">
-      <button class="topbar-btn" id="btn-flip" onclick="flipCamera()">
+    <!-- Top bar -->
+    <div class="cam-bar">
+      <button class="ico-btn" id="btn-flip" onclick="flipCam()">
         <svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       </button>
-      <span class="cam-topbar-title" id="cam-facing-label">Front</span>
-      <button class="topbar-btn" id="btn-flash" onclick="cycleFlash()">
-        <svg viewBox="0 0 24 24" id="flash-icon"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <div class="cam-bar-center">
+        <span class="frame-no" id="lbl-frame">No. 01</span>
+        <span class="facing-lbl" id="lbl-facing">FRONT</span>
+      </div>
+      <button class="ico-btn" id="btn-filter" onclick="toggleFilterPanel()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
       </button>
     </div>
 
-    <video id="video-main" autoplay muted playsinline></video>
-
-    <!-- Filter strip overlay -->
-    <div id="filter-strip-wrap">
-      <div class="filter-strip" id="filter-strip">
-        <!-- Rendered by JS -->
+    <!-- Filter panel (closed until tapped) -->
+    <div id="filter-panel">
+      <div class="filter-row" id="filter-row">
+        <!-- JS render -->
       </div>
     </div>
 
-    <div class="cam-vp-gradient-bot"></div>
-
-    <!-- Bottom controls overlay -->
-    <div class="cam-controls">
-      <div class="ctrl-side">
-        <div class="gallery-btn" onclick="goGallery()" id="gallery-thumb-btn">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        </div>
+    <!-- Bottom controls -->
+    <div class="cam-ctrls">
+      <!-- Gallery thumb (left) -->
+      <div class="gallery-thumb" onclick="goTo('pg-gallery',loadGallery)" id="gthumb">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
       </div>
 
-      <div class="shutter-wrap">
-        <div class="shutter" onclick="capturePhoto()" id="shutter-btn">
-          <div class="shutter-inner"></div>
-        </div>
+      <!-- Shutter (center) -->
+      <div class="shutter" id="shutter" onclick="capture()">
+        <div class="shutter-inner"></div>
       </div>
 
-      <div class="ctrl-side">
-        <div class="counter-badge">
-          <span class="counter-num" id="counter-num">0</span>
-          <span class="counter-tot" id="counter-tot">/ 20</span>
-        </div>
+      <!-- Counter (right) -->
+      <div class="counter-pill">
+        <span class="counter-n" id="cnt-n">0</span>
+        <span class="counter-d" id="cnt-d">/ 20</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ GALLERY PAGE ══ -->
-<div id="gallery-page" class="screen hidden">
-  <div class="gallery-topbar">
-    <div>
-      <div class="gallery-title">Gallery</div>
-      <div class="gallery-sub">Your moments</div>
+<!-- ══════════ GALLERY ══════════ -->
+<div id="pg-gallery" class="page off">
+  <div class="gl-top">
+    <div class="gl-title-wrap">
+      <h1>Gallery</h1>
+      <p>Your moments</p>
     </div>
-    <div style="display:flex;align-items:flex-start;gap:10px">
-      <button class="scan-btn" onclick="openFaceID()" id="scan-btn">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <button class="scan-ico-btn" onclick="goTo('pg-faceid',startFaceID)">
         <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
         <span>Scan</span>
       </button>
-      <div style="text-align:right">
-        <div class="wedding-name">Zuzu</div>
-        <div style="font-size:9px;color:var(--muted);margin:1px 0">&amp;</div>
-        <div class="wedding-name">Zaza</div>
+      <div class="gl-meta">
+        <div class="gl-meta-name">Zuzu</div>
+        <div class="gl-meta-amp">&amp;</div>
+        <div class="gl-meta-name">Zaza</div>
       </div>
     </div>
   </div>
 
-  <div class="gallery-grid-wrap">
-    <div class="gallery-grid" id="gallery-grid">
-      <div class="gallery-empty" style="grid-column:1/-1;height:280px">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        <p>No photos yet</p>
-      </div>
+  <div class="gl-grid-wrap">
+    <div class="gl-grid" id="gl-grid">
+      <div class="gl-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p>No photos yet</p></div>
     </div>
   </div>
 
-  <div class="gallery-botbar">
+  <div class="gl-bot">
     <button class="ghost-btn" onclick="goCamera()">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Back
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back
     </button>
-    <button class="primary-btn" onclick="goFinish()">Finish</button>
+    <button class="prim-btn" onclick="goTo('pg-finish')">Finish</button>
   </div>
 </div>
 
-<!-- ══ SINGLE PAGE ══ -->
-<div id="single-page" class="screen hidden" style="position:relative">
-  <div class="single-topbar">
-    <button class="ghost-btn" onclick="goBack('single-page','gallery-page')">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Back
+<!-- ══════════ SINGLE ══════════ -->
+<div id="pg-single" class="page off">
+  <div class="single-top">
+    <button class="ghost-btn" onclick="goTo('pg-gallery')">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back
     </button>
   </div>
   <img id="single-img" src="" alt="">
-  <div class="single-botbar">
-    <button class="dl-btn" onclick="downloadPhoto()">
+  <div class="single-bot">
+    <button class="dl-btn" onclick="dlPhoto()">
       <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
       Save Photo
     </button>
   </div>
 </div>
 
-<!-- ══ FINISH PAGE ══ -->
-<div id="finish-page" class="screen hidden">
-  <div class="finish-heart">
-    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-  </div>
-  <div class="finish-label">
-    <h1>Zuzu & Zaza</h1>
-    <p>Terima kasih sudah mengabadikan momen bersama kami.</p>
+<!-- ══════════ FINISH ══════════ -->
+<div id="pg-finish" class="page off">
+  <div class="finish-ring"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+  <div class="finish-text">
+    <h1>Zuzu &amp; Zaza</h1>
+    <p>Terima kasih sudah mengabadikan momen indah bersama kami.</p>
   </div>
   <button class="outline-btn" onclick="restartApp()">Take More Photos</button>
 </div>
 
-<!-- ══ FACE ID MODAL ══ -->
-<div id="faceid-modal">
-  <div class="fid-header">
-    <h2>Face Scan</h2>
-    <p id="fid-status">Initializing…</p>
+<!-- ══════════ FACE ID SEARCH ══════════ -->
+<div id="pg-faceid" class="page off">
+  <div class="fid-head">
+    <h2>Find My Photos</h2>
+    <p id="fid-status">Point your face at the camera</p>
   </div>
+  <p class="fid-search-info">Pindai wajahmu sekali, dan kami akan otomatis mencarikan semua fotomu dari seluruh galeri — tanpa perlu mencari satu per satu.</p>
+
   <div class="fid-cam-wrap">
-    <video id="fid-video" autoplay muted playsinline></video>
-    <canvas id="fid-canvas"></canvas>
+    <video id="fid-vid" autoplay muted playsinline></video>
+    <canvas id="fid-cvs"></canvas>
+    <div id="scan-line"></div>
   </div>
+
   <div class="fid-badges" id="fid-badges"></div>
-  <button class="fid-close" onclick="closeFaceID()">Close</button>
+  <div id="fid-progress-wrap"><div id="fid-progress-bar"></div></div>
+  <div id="fid-results"></div>
+
+  <div class="fid-actions">
+    <button class="fid-btn gold" id="btn-do-search" onclick="doFaceSearch()" style="display:none">Search My Photos</button>
+    <button class="fid-btn" onclick="closeFaceID()">Close</button>
+  </div>
 </div>
 
-<!-- ══ TOAST ══ -->
+<!-- ══════════ TOAST ══════════ -->
 <div id="toast">
-  <svg id="toast-icon" viewBox="0 0 24 24"></svg>
-  <span id="toast-msg">Uploading…</span>
+  <svg id="t-icon" viewBox="0 0 24 24"></svg>
+  <span id="t-msg"></span>
 </div>
 
 <script>
-/* ════════════════════════════════════════════
-   SUPABASE
-════════════════════════════════════════════ */
-const SB_URL = "https://plcrvnyfhczykdqrjhfs.supabase.co";
-const SB_KEY = "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B";
-const sb = window.supabase.createClient(SB_URL, SB_KEY);
+/* ════ SUPABASE ════ */
+const SB = window.supabase.createClient(
+  "https://plcrvnyfhczykdqrjhfs.supabase.co",
+  "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B"
+);
 
-/* ════════════════════════════════════════════
-   STATE
-════════════════════════════════════════════ */
-let stream = null;
-let count  = 0;
-const MAX  = 20;
-let facing = "user";      // "user" | "environment"
-let flashMode = "auto";   // "auto" | "on" | "off"
-let activeFilter = 0;     // index into FILTERS
+/* ════ CONSTANTS ════ */
+const MAX_PHOTOS = 20;
+const MODEL_URL  = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights";
 
-/* ════════════════════════════════════════════
-   FILTERS — 6 preset
-════════════════════════════════════════════ */
+/* ════ FILTERS ════
+   1. Classic 35mm   — analog film, kontras hangat
+   2. Vintage 90s     — retro semburat hijau/biru kamera saku jadul
+   3. Disposable      — washed out, saturasi merah/kuning khas disposable cam
+   4. BW Noir         — hitam putih kontras tinggi, deep shadows
+   5. Warm Retro       — warm tone/amber kuat dan estetik
+*/
 const FILTERS = [
   {
-    name:"None",
-    css:"",
-    canvas:"none",
-    grain:false, vignette:false
+    id:"classic35",name:"Classic 35mm",
+    css:"contrast(115%) brightness(101%) saturate(112%) sepia(10%) hue-rotate(-4deg)",
+    canvas:"contrast(115%) brightness(101%) saturate(112%) sepia(10%) hue-rotate(-4deg)",
+    grain:true,vignette:true,vigAmt:.32,grainAmt:14
   },
   {
-    name:"Grapefruit",
-    css:"saturate(130%) contrast(105%) hue-rotate(-10deg) brightness(108%)",
-    canvas:"saturate(130%) contrast(105%) hue-rotate(-10deg) brightness(108%)",
-    grain:false, vignette:false
+    id:"vintage90",name:"Vintage 90s",
+    css:"saturate(78%) contrast(96%) brightness(103%) sepia(8%) hue-rotate(150deg)",
+    canvas:"saturate(78%) contrast(96%) brightness(103%) sepia(8%) hue-rotate(150deg)",
+    grain:true,vignette:false,grainAmt:8,tint:"rgba(70,120,130,0.10)"
   },
   {
-    name:"Old Movies",
-    css:"sepia(80%) contrast(90%) brightness(95%)",
-    canvas:"sepia(80%) contrast(90%) brightness(95%)",
-    grain:true, vignette:true
+    id:"disposable",name:"Disposable",
+    css:"saturate(125%) contrast(90%) brightness(110%) sepia(28%) hue-rotate(-10deg)",
+    canvas:"saturate(125%) contrast(90%) brightness(110%) sepia(28%) hue-rotate(-10deg)",
+    grain:true,vignette:true,vigAmt:.38,grainAmt:20,tint:"rgba(255,150,60,0.08)"
   },
   {
-    name:"Night Breeze",
-    css:"saturate(60%) contrast(115%) brightness(85%) hue-rotate(195deg)",
-    canvas:"saturate(60%) contrast(115%) brightness(85%) hue-rotate(195deg)",
-    grain:false, vignette:true
+    id:"bwnoir",name:"BW Noir",
+    css:"grayscale(100%) contrast(145%) brightness(86%)",
+    canvas:"grayscale(100%) contrast(145%) brightness(86%)",
+    grain:true,vignette:true,vigAmt:.5,grainAmt:16
   },
   {
-    name:"Macarons",
-    css:"saturate(140%) contrast(95%) brightness(112%) hue-rotate(10deg)",
-    canvas:"saturate(140%) contrast(95%) brightness(112%) hue-rotate(10deg)",
-    grain:false, vignette:false
-  },
-  {
-    name:"Silent",
-    css:"grayscale(100%) contrast(125%) brightness(92%)",
-    canvas:"grayscale(100%) contrast(125%) brightness(92%)",
-    grain:true, vignette:false
+    id:"warmretro",name:"Warm Retro",
+    css:"sepia(52%) contrast(98%) brightness(104%) saturate(135%) hue-rotate(-6deg)",
+    canvas:"sepia(52%) contrast(98%) brightness(104%) saturate(135%) hue-rotate(-6deg)",
+    grain:false,vignette:true,vigAmt:.28,tint:"rgba(180,110,40,0.10)"
   }
 ];
 
-/* ════════════════════════════════════════════
-   CAMERA
-════════════════════════════════════════════ */
-const videoEl = document.getElementById('video-main');
+/* ════ STATE ════ */
+let stream   = null;
+let count    = 0;
+let facing   = "user";
+let filterIdx = 0;
+let filterOpen = false;
+let thumbRaf = null;
+let thumbCanvases = [];
+let isCapturing = false; // guard against double-tap while not blocking the shutter feel
 
-async function startCamera() {
-  if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
-  const constraints = {
-    video:{ facingMode:{exact:facing}, width:{ideal:1280}, height:{ideal:960} },
-    audio:false
-  };
-  try { stream = await navigator.mediaDevices.getUserMedia(constraints); }
-  catch { 
-    try { stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false}); }
-    catch(e){ console.error("Camera failed",e); return; }
-  }
-  videoEl.srcObject = stream;
-  // mirror front, not back
-  videoEl.style.transform = (facing==="user") ? "scaleX(-1)" : "scaleX(1)";
-  applyFilter(activeFilter);
-  renderFilterThumbs();
-}
-
-function flipCamera() {
-  facing = (facing==="user") ? "environment" : "user";
-  document.getElementById('cam-facing-label').textContent = facing==="user" ? "Front" : "Back";
-  if (flashMode==="on" && facing!=="environment") torchOff();
-  startCamera();
-}
-
-/* ════════════════════════════════════════════
-   FLASH / TORCH
-════════════════════════════════════════════ */
-const FLASH_CYCLE = ["auto","on","off"];
-const FLASH_LABELS = {auto:"Auto",on:"On",off:"Off"};
-const FLASH_COLORS = {auto:"#E8DCC8",on:"#FF9F0A",off:"#6B6B7A"};
-
-function cycleFlash() {
-  const idx = FLASH_CYCLE.indexOf(flashMode);
-  flashMode = FLASH_CYCLE[(idx+1)%3];
-  const btn = document.getElementById('btn-flash');
-  btn.style.color = FLASH_COLORS[flashMode];
-  btn.classList.toggle('active', flashMode!=="off");
-  document.getElementById('cam-facing-label').textContent = 
-    facing==="user" ? "Front" : "Back"; // keep label
-  if (flashMode==="on" && facing==="environment") torchOn();
-  else torchOff();
-}
-
-async function torchOn() {
-  if(!stream) return;
-  const vt = stream.getVideoTracks()[0];
-  const cap = vt.getCapabilities?.() || {};
-  if(cap.torch) { try { await vt.applyConstraints({advanced:[{torch:true}]}); } catch{} }
-}
-async function torchOff() {
-  if(!stream) return;
-  const vt = stream.getVideoTracks()[0];
-  const cap = vt.getCapabilities?.() || {};
-  if(cap.torch) { try { await vt.applyConstraints({advanced:[{torch:false}]}); } catch{} }
-}
-
-/* ════════════════════════════════════════════
-   FILTER
-════════════════════════════════════════════ */
-// Canvas elements per filter thumb for live preview
-const thumbVideos = [];
-
-function buildFilterStrip() {
-  const strip = document.getElementById('filter-strip');
-  strip.innerHTML = "";
-
-  FILTERS.forEach((f, i) => {
-    const item = document.createElement('div');
-    item.className = "filter-item" + (i===activeFilter ? " selected" : "");
-    item.dataset.index = i;
-    item.onclick = () => selectFilter(i);
-
-    const thumb = document.createElement('div');
-    thumb.className = "filter-thumb";
-
-    // Live canvas preview from main video
-    const cvs = document.createElement('canvas');
-    cvs.width = 52; cvs.height = 68;
-    cvs.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
-    if(f.css) cvs.style.filter = f.css;
-    thumb.appendChild(cvs);
-    thumbVideos.push(cvs);
-
-    const label = document.createElement('div');
-    label.className = "filter-thumb-label";
-    label.textContent = f.name;
-    thumb.appendChild(label);
-
-    const name = document.createElement('div');
-    name.className = "filter-name";
-    name.textContent = f.name;
-
-    item.appendChild(thumb);
-    item.appendChild(name);
-    strip.appendChild(item);
-  });
-
-  // Start thumb animation loop
-  requestAnimationFrame(renderThumbs);
-}
-
-function renderThumbs() {
-  if (!videoEl.srcObject || videoEl.readyState < 2) {
-    requestAnimationFrame(renderThumbs);
-    return;
-  }
-  thumbVideos.forEach((cvs, i) => {
-    const ctx = cvs.getContext('2d');
-    ctx.save();
-    if (facing==="user") { ctx.translate(52,0); ctx.scale(-1,1); }
-    ctx.drawImage(videoEl, 0, 0, 52, 68);
-    ctx.restore();
-  });
-  requestAnimationFrame(renderThumbs);
-}
-
-function renderFilterThumbs() {
-  // re-trigger after camera switch
-}
-
-function selectFilter(idx) {
-  activeFilter = idx;
-  applyFilter(idx);
-  document.querySelectorAll('.filter-item').forEach((el,i)=>{
-    el.classList.toggle('selected', i===idx);
-  });
-  // Scroll selected into view
-  const items = document.querySelectorAll('.filter-item');
-  if(items[idx]) items[idx].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-}
-
-function applyFilter(idx) {
-  const f = FILTERS[idx];
-  videoEl.style.filter = f.css || "";
-  // grain/vignette handled at capture time
-}
-
-/* ════════════════════════════════════════════
-   CAPTURE
-════════════════════════════════════════════ */
-function capturePhoto() {
-  const f = FILTERS[activeFilter];
-  const isBack = facing === "environment";
-  const doFlash = flashMode==="on" || (flashMode==="auto");
-
-  if (doFlash) {
-    if (isBack) {
-      // Back camera: torch blink
-      torchOn();
-      setTimeout(() => {
-        doCapture();
-        setTimeout(torchOff, 150);
-      }, 60);
-    } else {
-      // Front camera: white screen flash, blink effect
-      const fl = document.getElementById('flash-overlay');
-      fl.style.transition = "opacity 0.04s";
-      fl.style.opacity = "1";
-      setTimeout(() => {
-        doCapture();
-        fl.style.transition = "opacity 0.25s";
-        fl.style.opacity = "0";
-      }, 60);
-    }
-  } else {
-    doCapture();
-  }
-}
-
-async function doCapture() {
-  if (count >= MAX) { showPage('gallery-page'); loadGallery(); return; }
-
-  showToast('loading','Uploading…');
-
-  const W = videoEl.videoWidth  || 640;
-  const H = videoEl.videoHeight || 480;
-  const cvs = document.createElement('canvas');
-  cvs.width = W; cvs.height = H;
-  const ctx = cvs.getContext('2d');
-
-  const f = FILTERS[activeFilter];
-
-  ctx.save();
-  // Front camera: mirror the captured image
-  if (facing==="user") { ctx.translate(W,0); ctx.scale(-1,1); }
-  ctx.filter = f.canvas || "none";
-  ctx.drawImage(videoEl, 0,0,W,H);
-  ctx.restore();
-
-  // Grain
-  if (f.grain) addGrain(ctx, W, H, 18);
-  // Vignette
-  if (f.vignette) addVignette(ctx, W, H);
-
-  cvs.toBlob(async blob => {
-    if(!blob){ showToast('ok','Failed'); return; }
-    const name = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
-    const { error } = await sb.storage.from('galeri-foto').upload(name, blob, {contentType:'image/jpeg'});
-    if(error){ showToast('ok','Upload failed'); return; }
-
-    count++;
-    document.getElementById('counter-num').textContent = count;
-
-    showToast('ok','Saved ✓');
-    if(count >= MAX) { setTimeout(()=>{ showPage('gallery-page'); loadGallery(); }, 600); }
-  }, 'image/jpeg', 0.92);
-}
-
-function addGrain(ctx, w, h, intensity) {
-  const img = ctx.getImageData(0,0,w,h);
-  const d = img.data;
-  for(let i=0;i<d.length;i+=4){
-    const n = (Math.random()-.5)*intensity;
-    d[i]   = Math.max(0,Math.min(255,d[i]+n));
-    d[i+1] = Math.max(0,Math.min(255,d[i+1]+n));
-    d[i+2] = Math.max(0,Math.min(255,d[i+2]+n));
-  }
-  ctx.putImageData(img,0,0);
-}
-
-function addVignette(ctx, w, h) {
-  const g = ctx.createRadialGradient(w/2,h/2,h*.3,w/2,h/2,h*.72);
-  g.addColorStop(0,'rgba(0,0,0,0)');
-  g.addColorStop(1,'rgba(0,0,0,.52)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,w,h);
-}
-
-/* ════════════════════════════════════════════
-   NAVIGATION
-════════════════════════════════════════════ */
-function showPage(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-}
-
-function goGallery() {
-  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
-  showPage('gallery-page');
-  loadGallery();
+/* ════ NAVIGATION ════ */
+function goTo(id, cb) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('off'));
+  const pg = document.getElementById(id);
+  pg.classList.remove('off');
+  if (cb) cb();
 }
 
 function goCamera() {
   count = 0;
-  document.getElementById('counter-num').textContent = '0';
-  showPage('cam-page');
+  document.getElementById('cnt-n').textContent = '0';
+  updateFrameLabel();
+  goTo('pg-cam');
   startCamera();
-}
-
-function goBack(from, to) {
-  showPage(to);
-}
-
-function goFinish() {
-  showPage('finish-page');
 }
 
 function restartApp() {
-  count = 0;
-  document.getElementById('counter-num').textContent = '0';
-  showPage('cam-page');
+  goCamera();
+}
+
+function updateFrameLabel() {
+  const n = String(count+1).padStart(2,'0');
+  document.getElementById('lbl-frame').textContent = `No. ${n}`;
+}
+
+/* ════ CAMERA ════ */
+const vidMain = document.getElementById('vid-main');
+
+async function startCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:{exact:facing}, width:{ideal:1280}, height:{ideal:960} }, audio:false
+    });
+  } catch {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:facing }, audio:false
+      });
+    } catch(e) { console.error("Camera failed",e); return; }
+  }
+  vidMain.srcObject = stream;
+  vidMain.style.transform = facing==="user" ? "scaleX(-1)" : "scaleX(1)";
+  applyVideoFilter(filterIdx);
+  if (!thumbRaf) thumbRaf = requestAnimationFrame(drawThumbs);
+}
+
+function flipCam() {
+  facing = facing==="user" ? "environment" : "user";
+  document.getElementById('lbl-facing').textContent = facing==="user" ? "FRONT" : "BACK";
   startCamera();
 }
 
-/* ════════════════════════════════════════════
-   GALLERY
-════════════════════════════════════════════ */
-async function loadGallery() {
-  const grid = document.getElementById('gallery-grid');
-  grid.innerHTML = `<div class="gallery-empty" style="grid-column:1/-1;height:280px"><p style="color:var(--muted);font-size:12px;animation:pulse 1.5s infinite">Loading…</p></div>`;
+/* ════ FILTER PANEL — only visible after tapping the filter icon ════ */
+function buildFilterStrip() {
+  const row = document.getElementById('filter-row');
+  row.innerHTML = "";
+  thumbCanvases = [];
 
-  const { data, error } = await sb.storage.from('galeri-foto').list('',{limit:60,sortBy:{column:'created_at',order:'desc'}});
-  if(error||!data||!data.length){
-    grid.innerHTML=`<div class="gallery-empty" style="grid-column:1/-1;height:280px"><p>No photos yet</p></div>`;
+  FILTERS.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = "f-item" + (i===filterIdx ? " sel" : "");
+    item.dataset.i = i;
+    item.onclick = () => selectFilter(i);
+
+    const thumb = document.createElement('div');
+    thumb.className = "f-thumb";
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 56; cvs.height = 72;
+    cvs.style.cssText = "display:block;width:100%;height:100%";
+    if (f.css) cvs.style.filter = f.css;
+    thumbCanvases.push(cvs);
+    thumb.appendChild(cvs);
+
+    const lbl = document.createElement('div');
+    lbl.className = "f-thumb-label";
+    lbl.textContent = f.name;
+    thumb.appendChild(lbl);
+
+    const name = document.createElement('div');
+    name.className = "f-name";
+    name.textContent = f.name;
+
+    item.appendChild(thumb);
+    item.appendChild(name);
+    row.appendChild(item);
+  });
+}
+
+function drawThumbs() {
+  // Only render the live thumbnails while the filter panel is actually open —
+  // saves work the rest of the time since they're invisible otherwise.
+  if (filterOpen && vidMain.readyState >= 2) {
+    thumbCanvases.forEach(cvs => {
+      const ctx = cvs.getContext('2d');
+      ctx.save();
+      if (facing==="user") { ctx.translate(56,0); ctx.scale(-1,1); }
+      ctx.drawImage(vidMain, 0, 0, 56, 72);
+      ctx.restore();
+    });
+  }
+  thumbRaf = requestAnimationFrame(drawThumbs);
+}
+
+function toggleFilterPanel() {
+  filterOpen = !filterOpen;
+  document.getElementById('filter-panel').classList.toggle('open', filterOpen);
+  document.getElementById('btn-filter').classList.toggle('lit', filterOpen);
+}
+
+function selectFilter(i) {
+  filterIdx = i;
+  applyVideoFilter(i);
+  document.querySelectorAll('.f-item').forEach((el,j)=>el.classList.toggle('sel',j===i));
+  // Close panel after a short beat so the choice feels confirmed
+  setTimeout(()=>{
+    filterOpen = false;
+    document.getElementById('filter-panel').classList.remove('open');
+    document.getElementById('btn-filter').classList.remove('lit');
+  }, 280);
+}
+
+function applyVideoFilter(i) {
+  vidMain.style.filter = FILTERS[i].css || "";
+}
+
+/* ════ CAPTURE — instant, never blocks on flash or upload ════ */
+function capture() {
+  if (count >= MAX_PHOTOS) { goTo('pg-gallery', loadGallery); return; }
+  if (isCapturing) return; // tiny debounce so one tap = one photo
+  isCapturing = true;
+
+  const shutterEl = document.getElementById('shutter');
+  shutterEl.classList.add('busy');
+
+  // Flash: a true blink, never a sustained "on" state.
+  if (facing==="environment") blinkTorch(); else blinkScreen();
+
+  // Snapshot immediately — capture happens this frame, upload happens after.
+  snapshotAndUpload();
+
+  setTimeout(()=>{ shutterEl.classList.remove('busy'); isCapturing=false; }, 260);
+}
+
+function blinkScreen() {
+  const fl = document.getElementById('flash-ov');
+  fl.style.opacity = "1";
+  setTimeout(() => { fl.style.opacity = "0"; }, 90);
+}
+
+async function blinkTorch() {
+  if (!stream) return;
+  const vt = stream.getVideoTracks()[0];
+  const cap = vt.getCapabilities?.() || {};
+  if (!cap.torch) { blinkScreen(); return; } // device has no torch control — fall back
+  try {
+    await vt.applyConstraints({advanced:[{torch:true}]});
+    setTimeout(async()=>{
+      try{ await vt.applyConstraints({advanced:[{torch:false}]}); }catch{}
+    }, 140); // short blink only — always turned back off
+  } catch { blinkScreen(); }
+}
+
+async function snapshotAndUpload() {
+  const W = vidMain.videoWidth || 640;
+  const H = vidMain.videoHeight || 480;
+  const cvs = document.createElement('canvas');
+  cvs.width = W; cvs.height = H;
+  const ctx = cvs.getContext('2d');
+  const f = FILTERS[filterIdx];
+
+  ctx.save();
+  if (facing==="user") { ctx.translate(W,0); ctx.scale(-1,1); }
+  ctx.filter = f.canvas || "none";
+  ctx.drawImage(vidMain, 0, 0, W, H);
+  ctx.restore();
+
+  if (f.tint) addTint(ctx, W, H, f.tint);
+  if (f.grain) addGrain(ctx, W, H, f.grainAmt||14);
+  if (f.vignette) addVignette(ctx, W, H, f.vigAmt||.4);
+
+  // Counter advances right away — the photographer keeps shooting,
+  // the upload happens quietly in the background with no blocking UI.
+  count++;
+  document.getElementById('cnt-n').textContent = count;
+  updateFrameLabel();
+  if (count >= MAX_PHOTOS) {
+    setTimeout(()=>{ goTo('pg-gallery', loadGallery); }, 320);
+  }
+
+  cvs.toBlob(async blob => {
+    if (!blob) return;
+    const name = `photo_${Date.now()}_${Math.random().toString(36).slice(2,7)}.jpg`;
+    const { error } = await SB.storage.from('galeri-foto').upload(name, blob, {contentType:'image/jpeg'});
+    if (error) toast('Upload gagal','err');
+    // Success uploads stay silent — no "saved" text interrupting the shoot.
+  }, 'image/jpeg', 0.92);
+}
+
+function addTint(ctx, w, h, rgba) {
+  ctx.fillStyle = rgba;
+  ctx.fillRect(0,0,w,h);
+}
+
+function addGrain(ctx, w, h, amt) {
+  const d = ctx.getImageData(0,0,w,h);
+  const px = d.data;
+  for (let i=0;i<px.length;i+=4){
+    const n=(Math.random()-.5)*amt;
+    px[i]=Math.max(0,Math.min(255,px[i]+n));
+    px[i+1]=Math.max(0,Math.min(255,px[i+1]+n));
+    px[i+2]=Math.max(0,Math.min(255,px[i+2]+n));
+  }
+  ctx.putImageData(d,0,0);
+}
+
+function addVignette(ctx, w, h, strength) {
+  const g = ctx.createRadialGradient(w/2,h/2,h*.28,w/2,h/2,h*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(1,`rgba(0,0,0,${strength})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+}
+
+/* ════ GALLERY ════ */
+let galleryData = []; // cache of {name,url}
+
+async function loadGallery() {
+  const grid = document.getElementById('gl-grid');
+  grid.innerHTML = `<div class="gl-empty"><p style="color:var(--muted2);font-size:12px">Loading…</p></div>`;
+
+  // Don't sort server-side by created_at — list() doesn't support it reliably.
+  // Sort client-side by the timestamp embedded in our own filenames instead.
+  const { data, error } = await SB.storage.from('galeri-foto').list('', { limit:1000 });
+
+  if (error||!data?.length) {
+    grid.innerHTML = `<div class="gl-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p>No photos yet</p></div>`;
+    galleryData = [];
     return;
   }
+
+  const files = data.filter(f=>f.name!=='.emptyFolderPlaceholder');
+  files.sort((a,b)=>{
+    const ta = parseInt((a.name.match(/photo_(\d+)_/)||[])[1]||0);
+    const tb = parseInt((b.name.match(/photo_(\d+)_/)||[])[1]||0);
+    return tb-ta;
+  });
+
+  galleryData = [];
   grid.innerHTML = "";
-  data.filter(f=>f.name!=='.emptyFolderPlaceholder').forEach(file => {
-    const {data:pu} = sb.storage.from('galeri-foto').getPublicUrl(file.name);
+
+  files.forEach(file => {
+    const {data:pu} = SB.storage.from('galeri-foto').getPublicUrl(file.name);
+    galleryData.push({name:file.name, url:pu.publicUrl});
+
     const el = document.createElement('div');
-    el.className = "gallery-item";
+    el.className = "gl-item";
     el.innerHTML = `<img src="${pu.publicUrl}" loading="lazy">`;
-    el.onclick = () => {
-      document.getElementById('single-img').src = pu.publicUrl;
-      showPage('single-page');
-    };
+    el.onclick = () => { document.getElementById('single-img').src = pu.publicUrl; goTo('pg-single'); };
     grid.appendChild(el);
   });
 
-  // Update gallery thumb btn
-  const first = data.find(f=>f.name!=='.emptyFolderPlaceholder');
-  if(first){
-    const {data:pu} = sb.storage.from('galeri-foto').getPublicUrl(first.name);
-    const btn = document.getElementById('gallery-thumb-btn');
-    btn.innerHTML = `<img src="${pu.publicUrl}">`;
+  if (galleryData.length) {
+    const btn = document.getElementById('gthumb');
+    btn.innerHTML = `<img src="${galleryData[0].url}">`;
   }
 }
 
-/* ════════════════════════════════════════════
-   DOWNLOAD
-════════════════════════════════════════════ */
-async function downloadPhoto() {
+/* ════ DOWNLOAD ════ */
+async function dlPhoto() {
   const url = document.getElementById('single-img').src;
-  if(!url) return;
+  if (!url) return;
   try {
-    const r = await fetch(url);
-    const b = await r.blob();
+    const b = await fetch(url).then(r=>r.blob());
     const a = document.createElement('a');
     a.href = URL.createObjectURL(b);
     a.download = `booth_${Date.now()}.jpg`;
@@ -835,186 +838,293 @@ async function downloadPhoto() {
   } catch { window.open(url,'_blank'); }
 }
 
-/* ════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════ */
-let toastTimer;
-function showToast(type, msg) {
-  const t = document.getElementById('toast');
-  const icon = document.getElementById('toast-icon');
-  const label = document.getElementById('toast-msg');
-  t.className = `show ${type}`;
-  label.textContent = msg;
-  if(type==='loading'){
-    icon.innerHTML = `<circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="30" stroke="currentColor" stroke-width="2" fill="none"/>`;
-  } else {
+/* ════ TOAST ════ */
+let toastT;
+function toast(msg, type='ok') {
+  const el   = document.getElementById('toast');
+  const icon = document.getElementById('t-icon');
+  const lbl  = document.getElementById('t-msg');
+  lbl.textContent = msg;
+  if (type==='ok') {
     icon.innerHTML = `<polyline points="20 6 9 17 4 12"/>`;
+    el.style.color="#fff";
+  } else {
+    icon.innerHTML = `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`;
+    el.style.color="#ff453a";
   }
-  clearTimeout(toastTimer);
-  if(type!=='loading') toastTimer = setTimeout(()=>{ t.className=""; },1800);
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>el.classList.remove('show'), 1800);
 }
 
 /* ════════════════════════════════════════════
-   FACE ID
+   FACE SEARCH — scan your face once, find every
+   photo of you across the whole gallery automatically.
+   Descriptors are cached per-photo so re-scans (or a
+   second person scanning) don't recompute work already done.
 ════════════════════════════════════════════ */
-// Use raw.githubusercontent.com — confirmed 200
-const MODEL_URL = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights";
-let fidLoaded = false;
 let fidStream = null;
-let fidRaf = null;
+let fidLoaded = false;
+let fidDetectRaf = null;
+let capturedDescriptor = null;
+let isFidScanning = false;
+const descriptorCache = new Map(); // photo url -> [descriptors] (computed once per session)
 
 async function loadFaceModels() {
-  if(fidLoaded) return true;
-  document.getElementById('fid-status').textContent = "Loading AI models…";
+  if (fidLoaded) return true;
+  setFidStatus("Memuat model AI… (hanya pertama kali)");
   try {
     await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
       faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
       faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
     ]);
     fidLoaded = true;
     return true;
   } catch(e) {
-    console.error(e);
-    document.getElementById('fid-status').textContent = "Failed to load models.";
+    console.error("Model load error:", e);
+    setFidStatus("Gagal memuat model AI.", true);
     return false;
   }
 }
 
-async function openFaceID() {
-  document.getElementById('faceid-modal').classList.add('open');
+function setFidStatus(txt, isErr=false) {
+  const el = document.getElementById('fid-status');
+  el.textContent = txt;
+  el.className = isErr ? "err" : (/found|ditemukan|✓/i.test(txt) ? "found" : "");
+}
+
+async function startFaceID() {
+  capturedDescriptor = null;
   document.getElementById('fid-badges').innerHTML = "";
-  document.getElementById('fid-status').textContent = "Loading AI models…";
+  document.getElementById('fid-results').innerHTML = "";
+  document.getElementById('btn-do-search').style.display = "none";
+  document.getElementById('scan-line').classList.remove('active');
+  document.getElementById('fid-progress-wrap').classList.remove('show');
+
+  setFidStatus("Memuat model AI…");
 
   const ok = await loadFaceModels();
-  if(!ok) return;
+  if (!ok) return;
 
-  document.getElementById('fid-status').textContent = "Starting camera…";
+  setFidStatus("Membuka kamera…");
   try {
     fidStream = await navigator.mediaDevices.getUserMedia({
       video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false
     });
   } catch {
-    document.getElementById('fid-status').textContent = "Camera access denied.";
+    setFidStatus("Akses kamera ditolak.", true);
     return;
   }
 
-  const video = document.getElementById('fid-video');
-  video.srcObject = fidStream;
-  await video.play();
+  const vid = document.getElementById('fid-vid');
+  vid.srcObject = fidStream;
+  await vid.play();
 
-  document.getElementById('fid-status').textContent = "Scanning for faces…";
-  runFaceDetection();
+  setFidStatus("Arahkan wajahmu ke kamera…");
+  isFidScanning = true;
+  runFidDetect();
 }
 
-async function runFaceDetection() {
-  const video  = document.getElementById('fid-video');
-  const canvas = document.getElementById('fid-canvas');
-  const wrap   = canvas.parentElement;
-  canvas.width  = wrap.offsetWidth;
-  canvas.height = wrap.offsetHeight;
+async function runFidDetect() {
+  const vid  = document.getElementById('fid-vid');
+  const cvs  = document.getElementById('fid-cvs');
+  const wrap = cvs.parentElement;
+  cvs.width  = wrap.offsetWidth;
+  cvs.height = wrap.offsetHeight;
+  const ctx  = cvs.getContext('2d');
 
   const detect = async () => {
-    if(!fidStream) return;
+    if (!fidStream || !isFidScanning) return;
 
-    const results = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:0.45}))
-      .withFaceLandmarks(true)
+    const dets = await faceapi
+      .detectAllFaces(vid, new faceapi.SsdMobilenetv1Options({minConfidence:.5}))
+      .withFaceLandmarks()
       .withFaceExpressions()
-      .withAgeAndGender();
+      .withAgeAndGender()
+      .withFaceDescriptors();
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-    if(!results.length){
-      document.getElementById('fid-status').textContent = "No faces detected…";
-      document.getElementById('fid-badges').innerHTML = "";
-      fidRaf = requestAnimationFrame(detect);
-      return;
-    }
-
-    const sx = canvas.width  / video.videoWidth;
-    const sy = canvas.height / video.videoHeight;
+    const sx = cvs.width  / vid.videoWidth;
+    const sy = cvs.height / vid.videoHeight;
 
     ctx.save();
-    // Mirror canvas to match mirrored video
-    ctx.translate(canvas.width,0);
-    ctx.scale(-1,1);
+    ctx.translate(cvs.width, 0);
+    ctx.scale(-1, 1);
 
-    results.forEach(det => {
-      const b  = det.detection.box;
-      const bx = b.x*sx, by=b.y*sy, bw=b.width*sx, bh=b.height*sy;
+    if (!dets.length) {
+      setFidStatus("Wajah tidak terdeteksi — coba mendekat…");
+      document.getElementById('btn-do-search').style.display = "none";
+      document.getElementById('fid-badges').innerHTML = "";
+      capturedDescriptor = null;
+    } else {
+      dets.forEach(det => {
+        const b  = det.detection.box;
+        const bx = b.x*sx, by=b.y*sy, bw=b.width*sx, bh=b.height*sy;
 
-      // Box
-      ctx.strokeStyle = "rgba(232,220,200,0.8)";
-      ctx.lineWidth   = 1.5;
-      ctx.strokeRect(bx,by,bw,bh);
+        ctx.strokeStyle = "#C9A567";
+        ctx.lineWidth   = 1.5;
+        ctx.setLineDash([]);
+        ctx.strokeRect(bx, by, bw, bh);
 
-      // Corners
-      const cs = 12;
-      ctx.strokeStyle = "#E8DCC8";
-      ctx.lineWidth   = 2.5;
-      [
-        [bx,by,1,1],[bx+bw,by,-1,1],
-        [bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]
-      ].forEach(([cx,cy,dx,dy])=>{
-        ctx.beginPath();
-        ctx.moveTo(cx+dx*cs,cy);
-        ctx.lineTo(cx,cy);
-        ctx.lineTo(cx,cy+dy*cs);
-        ctx.stroke();
+        const cs = 14;
+        ctx.strokeStyle = "#C9A567";
+        ctx.lineWidth   = 2.8;
+        [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([cx,cy,dx,dy])=>{
+          ctx.beginPath();
+          ctx.moveTo(cx+dx*cs, cy);
+          ctx.lineTo(cx, cy);
+          ctx.lineTo(cx, cy+dy*cs);
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = "rgba(201,165,103,.5)";
+        det.landmarks.positions.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x*sx, p.y*sy, 1.3, 0, Math.PI*2);
+          ctx.fill();
+        });
       });
 
-      // Landmarks
-      ctx.fillStyle = "rgba(232,220,200,.55)";
-      det.landmarks.positions.forEach(p=>{
-        ctx.beginPath();
-        ctx.arc(p.x*sx,p.y*sy,1.4,0,Math.PI*2);
-        ctx.fill();
-      });
-    });
+      capturedDescriptor = dets[0].descriptor;
+      const g   = dets[0].gender==="male"?"Pria":"Wanita";
+      const age = Math.round(dets[0].age);
+      const EXP = {happy:"Senang",sad:"Sedih",angry:"Marah",fearful:"Takut",disgusted:"Jijik",surprised:"Terkejut",neutral:"Netral"};
+      const topExp = Object.entries(dets[0].expressions).sort((a,b)=>b[1]-a[1])[0];
+      const expLbl = EXP[topExp[0]] || topExp[0];
+
+      document.getElementById('fid-badges').innerHTML = `
+        <div class="fid-badge">
+          <b>${g}, ~${age} thn</b>
+          <small>${expLbl}</small>
+        </div>`;
+      setFidStatus("Wajah tertangkap ✓ — tekan Search My Photos");
+      document.getElementById('btn-do-search').style.display = "block";
+      document.getElementById('scan-line').classList.add('active');
+    }
+
     ctx.restore();
-
-    // Badges
-    const EXP_MAP = {happy:"Happy",sad:"Sad",angry:"Angry",fearful:"Fearful",disgusted:"Disgusted",surprised:"Surprised",neutral:"Neutral"};
-    const badges = document.getElementById('fid-badges');
-    badges.innerHTML = "";
-    document.getElementById('fid-status').textContent = `${results.length} face${results.length>1?'s':''} detected`;
-
-    results.forEach((det,i)=>{
-      const g   = det.gender==="male"?"Male":"Female";
-      const age = Math.round(det.age);
-      const top = Object.entries(det.expressions).sort((a,b)=>b[1]-a[1])[0];
-      const exp = EXP_MAP[top[0]] || top[0];
-      const el  = document.createElement('div');
-      el.className = "fid-badge";
-      el.innerHTML = `<span>#${i+1} · ${g}, ~${age} yrs</span><small>${exp}</small>`;
-      badges.appendChild(el);
-    });
-
-    fidRaf = requestAnimationFrame(detect);
+    fidDetectRaf = requestAnimationFrame(detect);
   };
 
-  fidRaf = requestAnimationFrame(detect);
+  fidDetectRaf = requestAnimationFrame(detect);
+}
+
+/* Search the entire gallery — every photo, not a manual scroll-through —
+   for faces matching the one just scanned. Descriptors are cached so a
+   re-search (or another guest's scan) skips photos already processed. */
+async function doFaceSearch() {
+  if (!capturedDescriptor) { setFidStatus("Pindai wajahmu terlebih dahulu."); return; }
+  if (!galleryData.length) { await loadGallery(); }
+  if (!galleryData.length) { setFidStatus("Galeri masih kosong.", true); return; }
+
+  const total = galleryData.length;
+  const progWrap = document.getElementById('fid-progress-wrap');
+  const progBar  = document.getElementById('fid-progress-bar');
+  progWrap.classList.add('show');
+  progBar.style.width = "0%";
+
+  document.getElementById('fid-results').innerHTML = "";
+  const btn = document.getElementById('btn-do-search');
+  btn.textContent = "Mencari…";
+  btn.disabled = true;
+
+  const THRESHOLD = 0.52;
+  const matches   = [];
+
+  for (let i=0; i<total; i++) {
+    setFidStatus(`Memeriksa foto ${i+1} dari ${total}…`);
+    progBar.style.width = `${Math.round(((i+1)/total)*100)}%`;
+
+    const url = galleryData[i].url;
+    try {
+      let descs = descriptorCache.get(url);
+      if (!descs) {
+        const img = await loadImg(url);
+        const dets = await faceapi
+          .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({minConfidence:.45}))
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+        descs = dets.map(d=>d.descriptor);
+        descriptorCache.set(url, descs); // cache so future scans skip this photo entirely
+      }
+
+      for (const d of descs) {
+        const dist = faceapi.euclideanDistance(capturedDescriptor, d);
+        if (dist < THRESHOLD) { matches.push({url, dist}); break; }
+      }
+    } catch(e) { /* unreadable photo — skip and continue */ }
+  }
+
+  btn.textContent = "Search My Photos";
+  btn.disabled = false;
+  progWrap.classList.remove('show');
+
+  if (!matches.length) {
+    setFidStatus("Tidak ada foto yang cocok ditemukan.", true);
+    document.getElementById('fid-results').innerHTML = `<div class="fid-badge" style="width:100%;text-align:center;padding:12px 0"><small>Tidak ada foto yang cocok dengan wajahmu</small></div>`;
+    return;
+  }
+
+  matches.sort((a,b)=>a.dist-b.dist);
+  setFidStatus(`✓ Ditemukan ${matches.length} foto dirimu!`, false);
+  document.getElementById('fid-status').className = "found";
+
+  const res = document.getElementById('fid-results');
+  res.innerHTML = "";
+  matches.forEach((m, i) => {
+    const el = document.createElement('div');
+    el.className = "fid-result-item";
+    const pct = Math.round((1-m.dist)*100);
+    el.innerHTML = `
+      <img class="fid-result-img" src="${m.url}">
+      <div class="fid-result-info">
+        <p>Foto cocok #${i+1}</p>
+        <small>Kecocokan: ${pct}%</small>
+      </div>
+      <span class="fid-result-badge">${pct}%</span>`;
+    el.onclick = () => {
+      document.getElementById('single-img').src = m.url;
+      closeFaceID();
+      goTo('pg-single');
+    };
+    res.appendChild(el);
+  });
+}
+
+function loadImg(url) {
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = url;
+  });
 }
 
 function closeFaceID() {
-  cancelAnimationFrame(fidRaf); fidRaf=null;
-  if(fidStream){ fidStream.getTracks().forEach(t=>t.stop()); fidStream=null; }
-  const v = document.getElementById('fid-video');
+  isFidScanning = false;
+  cancelAnimationFrame(fidDetectRaf); fidDetectRaf=null;
+  if (fidStream) { fidStream.getTracks().forEach(t=>t.stop()); fidStream=null; }
+  const v = document.getElementById('fid-vid');
   v.srcObject = null;
-  const c = document.getElementById('fid-canvas');
+  const c = document.getElementById('fid-cvs');
   c.getContext('2d').clearRect(0,0,c.width,c.height);
+  document.getElementById('scan-line').classList.remove('active');
   document.getElementById('fid-badges').innerHTML = "";
-  document.getElementById('faceid-modal').classList.remove('open');
+  document.getElementById('fid-results').innerHTML = "";
+  document.getElementById('fid-progress-wrap').classList.remove('show');
+  capturedDescriptor = null;
+  goTo('pg-gallery');
 }
 
-/* ════════════════════════════════════════════
-   INIT
-════════════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', ()=>{
+/* ════ INIT ════ */
+window.addEventListener('DOMContentLoaded', () => {
   buildFilterStrip();
+  updateFrameLabel();
   startCamera();
 });
 </script>
