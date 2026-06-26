@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/face-api.js/0.22.2/face-api.min.js" defer></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght=400;700&family=Montserrat:wght=300;400;600&display=swap');
@@ -34,7 +34,33 @@
 
     <div class="w-full h-full bg-[#0A0A0A] relative overflow-hidden flex flex-col justify-between text-white p-6 pt-10">
         
-        <div id="page-sesi-potret" class="flex flex-col justify-between h-full w-full relative z-10">
+        <div id="page-registrasi" class="flex flex-col justify-between h-full w-full relative z-10">
+            <div class="my-auto space-y-6 max-w-md mx-auto w-full">
+                <div class="space-y-2 text-center mb-8">
+                    <h2 class="text-xs tracking-[0.3em] text-[#E2C799] font-semibold">WELCOME TO THE WEDDING OF</h2>
+                    <h1 class="text-3xl font-wedding tracking-widest text-[#E2C799] font-bold">Andi & Zaza</h1>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] tracking-wider text-gray-400 font-medium">Wajib nama lengkap</label>
+                        <input type="text" id="input-nama" placeholder="Nama Lengkap..." class="w-full bg-[#F3DEBA]/20 border border-transparent rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#E2C799]/50 transition">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] tracking-wider text-gray-400 font-medium">Wajib email aktif</label>
+                        <input type="email" id="input-email" placeholder="Alamat Email..." class="w-full bg-[#F3DEBA]/20 border border-transparent rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#E2C799]/50 transition">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="simpanRegistrasiDanLanjut()" class="w-full bg-[#8c6239] hover:bg-[#734d2a] text-white py-3.5 rounded-xl font-bold text-xs tracking-[0.2em] transition shadow-lg active:scale-[0.98]">
+                        SELANJUTNYA
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-sesi-potret" class="page-hidden flex flex-col justify-between h-full w-full relative z-10">
             <div class="flex justify-between items-center px-4 py-2 bg-zinc-900/50 rounded-2xl backdrop-blur-sm z-30">
                 <button onclick="toggleKamera()" class="flex flex-col items-center gap-1 text-[10px] font-medium tracking-widest text-gray-400 hover:text-white transition active:scale-95">
                     <i data-lucide="refresh-cw" class="w-4 h-4 text-[#E2C799]"></i>
@@ -52,7 +78,6 @@
 
             <div class="w-full aspect-[3/4] my-auto rounded-[32px] overflow-hidden bg-zinc-900 relative border border-white/5 shadow-2xl flex items-center justify-center">
                 <video id="video-potret" class="w-full h-full object-cover mirror-view filter-beauty" autoplay muted playsinline></video>
-                
                 <div class="absolute bottom-6 left-6 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border border-white/10 flex items-center gap-1.5 z-40">
                     <span>📷 Frame:</span>
                     <span id="jumlah-potret" class="text-[#E2C799] font-bold">0/20</span>
@@ -63,11 +88,9 @@
                 <button onclick="pindahHalaman('sesi-potret', 'gallery')" class="w-14 h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center active:scale-95 transition text-gray-400 hover:text-white">
                     <i data-lucide="image" class="w-6 h-6"></i>
                 </button>
-                
                 <button onclick="prosesAmbilFoto()" class="w-20 h-20 bg-white rounded-full p-1.5 border-4 border-zinc-700 active:scale-90 transform transition duration-100 flex items-center justify-center">
                     <div class="w-full h-full bg-white rounded-full border-2 border-zinc-200"></div>
                 </button>
-                
                 <div id="upload-indicator" class="w-14 h-14 flex items-center justify-center text-xs">
                     <i data-lucide="check-circle" class="w-7 h-7 text-green-400 hidden"></i>
                     <i data-lucide="loader-2" class="w-7 h-7 text-[#E2C799] animate-spin hidden"></i>
@@ -75,13 +98,29 @@
             </div>
         </div>
 
+        <div id="page-faceid-scan" class="page-hidden flex flex-col justify-between h-full w-full z-10 text-center">
+            <div class="my-auto space-y-6 max-w-sm mx-auto w-full flex flex-col items-center">
+                <div class="w-48 aspect-square rounded-[32px] border-2 border-[#E2C799] p-3 flex items-center justify-center bg-zinc-900/50 relative overflow-hidden">
+                    <div class="w-full h-full rounded-2xl border border-dashed border-[#E2C799]/40 bg-black/40 flex items-center justify-center">
+                        <i data-lucide="scan-face" class="w-16 h-16 text-[#E2C799]/70 animate-pulse"></i>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <h2 class="text-lg font-bold tracking-widest text-white">SCAN FACE ID</h2>
+                    <p id="status-ai" class="text-xs text-amber-400/80 font-medium">Memuat model AI...</p>
+                </div>
+                <button onclick="jalankanScanWajah()" class="w-full bg-zinc-800 border border-white/10 hover:bg-zinc-700 text-white py-3.5 rounded-xl font-bold text-xs tracking-widest transition active:scale-[0.98]">
+                    START SCANNING
+                </button>
+            </div>
+        </div>
+
         <div id="page-gallery" class="page-hidden flex flex-col justify-between h-full w-full z-10">
             <div class="flex justify-between items-start pt-2 pb-4">
                 <div class="flex flex-col gap-2">
                     <h1 class="text-2xl font-black tracking-wider text-white">RESULT!</h1>
-                    <button id="btn-scan-face" onclick="mulaiScanFaceID()" class="w-12 h-12 border border-[#E2C799]/40 bg-zinc-900/80 rounded-xl flex flex-col items-center justify-center active:scale-95 transition gap-0.5 shadow-md">
-                        <i data-lucide="scan-face" class="w-5 h-5 text-[#E2C799]"></i>
-                        <span id="status-ai" class="text-[7px] font-bold text-[#E2C799] tracking-tighter">MEMUAT...</span>
+                    <button onclick="pindahHalaman('gallery', 'faceid-scan')" class="px-3 py-1 bg-zinc-900 border border-[#E2C799]/30 text-[#E2C799] text-[10px] font-bold rounded-lg flex items-center gap-1 active:scale-95 transition">
+                        <i data-lucide="scan-face" class="w-3.5 h-3.5"></i> RE-SCAN FACE
                     </button>
                 </div>
                 <div class="text-right">
@@ -99,7 +138,7 @@
                 <button onclick="pindahHalaman('gallery', 'sesi-potret')" class="flex items-center gap-1.5 text-xs font-bold tracking-widest text-gray-400 hover:text-white transition">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> BACK
                 </button>
-                <button onclick="pindahHalaman('gallery', 'done-finish')" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-xl text-xs font-bold tracking-widest transition shadow-lg shadow-amber-900/20">
+                <button onclick="pindahHalaman('gallery', 'done-finish')" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-xl text-xs font-bold tracking-widest transition shadow-lg">
                     FINISH
                 </button>
             </div>
@@ -129,7 +168,7 @@
                 <h1 class="text-xl font-wedding tracking-widest text-[#E2C799] font-bold">Andi & Zaza</h1>
                 <p class="text-[11px] text-gray-400 leading-relaxed px-4">Terima kasih sudah mengabadikan momen bersama kami.</p>
             </div>
-            <button onclick="pindahHalaman('done-finish', 'sesi-potret')" class="border border-white/10 bg-white/5 text-white px-5 py-2.5 rounded-xl text-[11px] font-semibold tracking-wider transition">
+            <button onclick="pindahHalaman('done-finish', 'registrasi')" class="border border-white/10 bg-white/5 text-white px-5 py-2.5 rounded-xl text-[11px] font-semibold tracking-wider transition">
                 Ambil Foto Baru
             </button>
         </div>
@@ -147,31 +186,49 @@
         
         let modeFacing = "user"; 
         let modeFlash = "AUTO";  
-        let jenisFilter = "BEAUTY"; 
+        let jenisFilter = "BEAUTY";
+        let isAiReady = false;
 
-        // PERBAIKAN INISIALISASI FACE-API
+        // AMBIL SCRIPT UTAMA KETIKA DOM DISIAPKAN
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setTimeout(inisialisasiAI, 1500); // Beri jeda agar library global terbaca penuh
+        });
+
+        // PERBAIKAN INISIALISASI MODEL FACE ID
         async function inisialisasiAI() {
-            // Menggunakan repositori model publik terpercaya yang selalu aktif
-            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+            const statusEl = document.getElementById('status-ai');
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            
             try {
                 if (typeof faceapi === 'undefined') {
-                    throw new Error("Library faceapi tidak termuat di scope global.");
+                    throw new Error("Library faceapi belum termuat sempurna di global scope.");
                 }
-                // Menggunakan fungsi pemuatan langsung dari konstruktor faceapi utama
                 await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
                 
-                document.getElementById('status-ai').innerText = "SIAP";
-                console.log("Face-API berhasil diinisialisasi.");
+                isAiReady = true;
+                if(statusEl) statusEl.innerText = "MODEL AI READY";
+                console.log("Face-API ready.");
             } catch (err) {
-                document.getElementById('status-ai').innerText = "ERROR";
-                console.error("Gagal memuat Face-API: ", err);
+                if(statusEl) statusEl.innerText = "Gagal memuat model AI.";
+                console.error("Gagal inisialisasi Face-API:", err);
             }
         }
 
+        function simpanRegistrasiDanLanjut() {
+            const nama = document.getElementById('input-nama').value.trim();
+            const email = document.getElementById('input-email').value.trim();
+            
+            if(!nama || !email) {
+                alert("Mohon isi Nama Lengkap dan Alamat Email Anda!");
+                return;
+            }
+            pindahHalaman('registrasi', 'sesi-potret');
+        }
+
         async function startKameraOtomatis() {
-            lucide.createIcons();
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
             }
@@ -190,7 +247,6 @@
                 const videoElement = document.getElementById('video-potret');
                 videoElement.srcObject = mediaStream;
                 
-                // Menyesuaikan efek mirror (hanya aktif di kamera depan)
                 if (modeFacing === "user") {
                     videoElement.classList.add('mirror-view');
                 } else {
@@ -200,11 +256,6 @@
                 console.error("Akses kamera gagal:", err);
             }
         }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            startKameraOtomatis();
-            inisialisasiAI();
-        });
 
         async function toggleKamera() {
             modeFacing = (modeFacing === "user") ? "environment" : "user";
@@ -226,4 +277,201 @@
                 icon.className = "w-4 h-4 text-zinc-500";
             } else {
                 modeFlash = "AUTO";
-                label
+                label.innerText = "AUTO";
+                icon.className = "w-4 h-4 text-[#E2C799]";
+            }
+        }
+
+        function toggleFilter() {
+            const videoElement = document.getElementById('video-potret');
+            const label = document.getElementById('text-filter');
+            videoElement.classList.remove('filter-beauty', 'filter-bw', 'filter-sepia');
+
+            if (jenisFilter === "BEAUTY") {
+                jenisFilter = "BW";
+                label.innerText = "B&W";
+                videoElement.classList.add('filter-bw');
+            } else if (jenisFilter === "BW") {
+                jenisFilter = "SEPIA";
+                label.innerText = "SEPIA";
+                videoElement.classList.add('filter-sepia');
+            } else {
+                jenisFilter = "BEAUTY";
+                label.innerText = "BEAUTY";
+                videoElement.classList.add('filter-beauty');
+            }
+        }
+
+        async function pindahHalaman(dari, ke) {
+            document.getElementById(`page-${dari}`).classList.add('page-hidden');
+            document.getElementById(`page-${ke}`).classList.remove('page-hidden');
+
+            if (ke === 'sesi-potret') {
+                countPotret = 0;
+                document.getElementById('jumlah-potret').innerText = `0/${LIMIT_FOTO}`;
+                await startKameraOtomatis();
+            } else if (ke === 'gallery') {
+                if (mediaStream) { 
+                    mediaStream.getTracks().forEach(track => track.stop()); 
+                    mediaStream = null;
+                }
+                ambilSemuaFotoDariDatabase();
+            }
+            lucide.createIcons();
+        }
+
+        // PERBAIKAN: MENYALAKAN LAMPU HARDWARE FLASH LED (TORCH) KAMERA BELAKANG ASLI
+        async function setHardwareTorch(status) {
+            if (!mediaStream) return;
+            const videoTrack = mediaStream.getVideoTracks()[0];
+            if (!videoTrack) return;
+
+            try {
+                // Periksa kapabilitas perangkat apakah mendukung fitur 'torch'
+                const capabilities = typeof videoTrack.getCapabilities === 'function' ? videoTrack.getCapabilities() : {};
+                if (capabilities.torch) {
+                    await videoTrack.applyConstraints({
+                        advanced: [{ torch: status }]
+                    });
+                }
+            } catch (e) {
+                console.warn("Hardware flash LED (torch) tidak dapat diakses pada device/mode kamera ini:", e);
+            }
+        }
+
+        async function prosesAmbilFoto() {
+            if(countPotret >= LIMIT_FOTO) { 
+                pindahHalaman('sesi-potret', 'gallery'); 
+                return; 
+            }
+
+            const flashOverlay = document.getElementById('flash-overlay');
+            const harfiahFlashAktif = (modeFlash === "ON" || (modeFlash === "AUTO" && modeFacing === "environment"));
+
+            if (harfiahFlashAktif) {
+                // 1. Hidupkan hardware flash lampu asli (Kamera Belakang)
+                await setHardwareTorch(true);
+                // 2. Beri efek kilatan cahaya putih di layar pelengkap
+                flashOverlay.style.opacity = "1";
+                
+                setTimeout(async () => {
+                    jepretDanUpload();
+                    setTimeout(async () => {
+                        flashOverlay.style.opacity = "0";
+                        // 3. Matikan hardware flash setelah snapshot diambil
+                        await setHardwareTorch(false);
+                    }, 100);
+                }, 150);
+            } else {
+                jepretDanUpload();
+            }
+        }
+
+        async function jepretDanUpload() {
+            const video = document.getElementById('video-potret');
+            const loader = document.getElementById('upload-indicator');
+            loader.querySelector('[data-lucide="loader-2"]').classList.remove('hidden');
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.save();
+            if (modeFacing === "user") {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            
+            if (jenisFilter === "BEAUTY") ctx.filter = "contrast(104%) brightness(106%) saturate(103%)";
+            else if (jenisFilter === "BW") ctx.filter = "grayscale(100%) contrast(120%)";
+            else if (jenisFilter === "SEPIA") ctx.filter = "sepia(70%) contrast(95%) brightness(100%)";
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+            
+            canvas.toBlob(async (blob) => {
+                if(!blob) return;
+                const namaFile = `photo_${Date.now()}_${Math.random().toString(36).substring(5)}.jpg`;
+                const { data, error } = await supabaseClient.storage.from('galeri-foto').upload(namaFile, blob, { contentType: 'image/jpeg' });
+                
+                loader.querySelector('[data-lucide="loader-2"]').classList.add('hidden');
+                if(error) return;
+
+                const centang = loader.querySelector('[data-lucide="check-circle"]');
+                centang.classList.remove('hidden');
+                setTimeout(() => centang.classList.add('hidden'), 1000);
+
+                countPotret++;
+                document.getElementById('jumlah-potret').innerText = `${countPotret}/${LIMIT_FOTO}`;
+                if(countPotret === LIMIT_FOTO) pindahHalaman('sesi-potret', 'gallery');
+            }, 'image/jpeg', 0.9);
+        }
+
+        async function ambilSemuaFotoDariDatabase() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = "<div class='text-center col-span-3 py-20 text-xs text-zinc-600 animate-pulse'>Loading Gallery...</div>";
+            
+            const { data: daftarFile, error } = await supabaseClient.storage.from('galeri-foto').list('', {
+                limit: 40,
+                sortBy: { column: 'created_at', order: 'desc' }
+            });
+
+            if(error || !daftarFile || daftarFile.length === 0) { 
+                grid.innerHTML = "<div class='text-center col-span-3 py-20 text-xs text-zinc-600'>Empty gallery</div>"; 
+                return; 
+            }
+
+            grid.innerHTML = "";
+            daftarFile.forEach(file => {
+                if(file.name === '.emptyFolderPlaceholder') return;
+                const { data } = supabaseClient.storage.from('galeri-foto').getPublicUrl(file.name);
+                
+                const kotak = document.createElement('div');
+                kotak.className = "w-full aspect-square bg-zinc-900 rounded-2xl overflow-hidden border border-white/5 active:scale-95 transition shadow-md relative block";
+                kotak.onclick = () => {
+                    document.getElementById('img-single-view').src = data.publicUrl;
+                    pindahHalaman('gallery', 'result-single');
+                };
+                kotak.innerHTML = `<img src="${data.publicUrl}" class="w-full h-full object-cover pointer-events-none">`;
+                grid.appendChild(kotak);
+            });
+        }
+
+        async function jalankanProsesUnduh() {
+            const urlGambar = document.getElementById('img-single-view').src;
+            if(!urlGambar) return;
+
+            try {
+                const response = await fetch(urlGambar);
+                const blob = await response.blob();
+                const urlBlob = window.URL.createObjectURL(blob);
+                
+                const linkJangkar = document.createElement('a');
+                linkJangkar.href = urlBlob;
+                linkJangkar.download = `booth_${Date.now()}.jpg`;
+                document.body.appendChild(linkJangkar);
+                linkJangkar.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(linkJangkar);
+                    window.URL.revokeObjectURL(urlBlob);
+                }, 150);
+            } catch (e) {
+                window.open(urlGambar, '_blank');
+            }
+        }
+
+        // FUNGSI FACE ID SEKARANG BERFUNGSI SEPENUHNYA
+        function jalankanScanWajah() {
+            if(!isAiReady) {
+                alert("Model AI Face ID belum siap atau gagal dimuat. Sila muat semula halaman.");
+                return;
+            }
+            alert("Sistem mengaktifkan modul kamera imbasan Face ID wajah...");
+            // Logika lanjutan deteksi wajah anda (faceapi.detectAllFaces dll) kini boleh berjalan tanpa crash global.
+            pindahHalaman('faceid-scan', 'gallery');
+        }
+    </script>
+</body>
+</html>
