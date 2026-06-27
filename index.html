@@ -2,425 +2,418 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>Booth</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#090909;color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0a0a0a;color:#fff;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
 :root{
-  --bg:#090909;
-  --s1:#111114;
-  --s2:#18181c;
-  --s3:#222228;
-  --border:rgba(255,255,255,0.06);
-  --border2:rgba(255,255,255,0.12);
-  --gold:#C9A96E;
-  --gold-bg:rgba(201,169,110,0.14);
-  --muted:#52525e;
-  --muted2:#71717a;
-  --safe-t:env(safe-area-inset-top,0px);
-  --safe-b:env(safe-area-inset-bottom,0px);
+  --bg:#0a0a0a;
+  --s1:#111115;
+  --s2:#17171b;
+  --s3:#1f1f24;
+  --b1:rgba(255,255,255,0.055);
+  --b2:rgba(255,255,255,0.10);
+  --b3:rgba(255,255,255,0.16);
+  --gold:#c8a96e;
+  --gold-a:rgba(200,169,110,0.12);
+  --dim:#4a4a55;
+  --dim2:#6e6e7a;
+  --st:env(safe-area-inset-top,0px);
+  --sb:env(safe-area-inset-bottom,0px);
 }
 
-/* ─── PAGES ─── */
-.page{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:opacity .18s,transform .18s}
-.page.off{opacity:0;pointer-events:none;display:none}
+.page{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.page.off{display:none}
 
-/* ══════════════ CAMERA PAGE ══════════════ */
+/* ────────────────────────────────
+   CAMERA
+──────────────────────────────── */
 #pg-cam{background:#000}
 #cam-vp{position:absolute;inset:0;overflow:hidden}
 #vid-main{width:100%;height:100%;object-fit:cover;display:block}
 
-.vp-fade-top{position:absolute;inset:0 0 auto 0;height:160px;background:linear-gradient(to bottom,rgba(0,0,0,.75),transparent);pointer-events:none;z-index:2}
-.vp-fade-bot{position:absolute;inset:auto 0 0 0;height:240px;background:linear-gradient(to top,rgba(0,0,0,.82),transparent);pointer-events:none;z-index:2}
+/* vignette-only overlay on live view — no grain RAF */
+#cam-vig{
+  position:absolute;inset:0;pointer-events:none;z-index:2;
+  opacity:0;transition:opacity .3s;
+  background:radial-gradient(ellipse at 50% 50%,transparent 38%,rgba(0,0,0,.52) 100%);
+}
 
-/* Analog overlays on live view */
-#cam-grain{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;mix-blend-mode:overlay;transition:opacity .3s}
-#cam-vignette{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;border-radius:0;transition:opacity .3s;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.55) 100%)}
-#cam-chromab{position:absolute;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .3s;mix-blend-mode:screen;border-radius:0}
+.vp-top{position:absolute;inset:0 0 auto;height:140px;background:linear-gradient(to bottom,rgba(0,0,0,.68),transparent);pointer-events:none;z-index:3}
+.vp-bot{position:absolute;inset:auto 0 0;height:230px;background:linear-gradient(to top,rgba(0,0,0,.78),transparent);pointer-events:none;z-index:3}
 
 /* Top bar */
 .cam-bar{
   position:absolute;top:0;left:0;right:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
-  padding:calc(var(--safe-t) + 16px) 20px 14px;
-  gap:8px;
+  padding:calc(var(--st) + 14px) 18px 12px;
 }
-.cam-bar-center{
-  display:flex;align-items:center;gap:10px;
-  position:absolute;left:50%;transform:translateX(-50%);
-}
-.facing-lbl{font-size:10px;font-weight:700;letter-spacing:.18em;color:rgba(255,255,255,.38);text-transform:uppercase}
-.ico-btn{
-  width:38px;height:38px;border-radius:50%;
-  background:rgba(0,0,0,.38);backdrop-filter:blur(10px);
-  border:1px solid rgba(255,255,255,.12);
-  display:flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:background .12s,transform .08s;position:relative;
-}
-.ico-btn:active{transform:scale(.84)}
-.ico-btn svg{width:17px;height:17px;stroke:rgba(255,255,255,.82);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
-.ico-btn.lit svg{stroke:var(--gold)}
-.ico-btn.flash-on svg{stroke:#FFD60A}
-.ico-btn.flash-off svg{stroke:var(--muted)}
-.flash-lbl{
-  position:absolute;bottom:-2px;right:-2px;
-  font-size:7px;font-weight:800;border-radius:4px;
-  padding:1px 3px;background:#FFD60A;color:#000;letter-spacing:.04em;
-  display:none;
-}
-.ico-btn.flash-on .flash-lbl{display:block}
 
-/* Filter strip — slide in from bottom, hidden by default */
+.ib{/* icon button */
+  width:38px;height:38px;border-radius:50%;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .12s,transform .08s;flex-shrink:0;
+}
+.ib:active{transform:scale(.83);background:rgba(255,255,255,.1)}
+.ib svg{width:17px;height:17px;stroke:rgba(255,255,255,.78);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.ib.active svg{stroke:var(--gold)}
+
+/* Flash button states */
+#btn-flash[data-mode="on"] svg{stroke:#FFD60A}
+#btn-flash[data-mode="off"] svg{stroke:rgba(255,255,255,.28)}
+
+/* Filter toggle glow when panel open */
+#btn-flt.open{background:rgba(200,169,110,.14);border-color:rgba(200,169,110,.3)}
+#btn-flt.open svg{stroke:var(--gold)}
+
+/* Filter panel */
 #filter-panel{
-  position:absolute;bottom:96px;left:0;right:0;z-index:9;
-  transform:translateY(14px);opacity:0;pointer-events:none;
-  transition:transform .24s cubic-bezier(.32,0,.2,1),opacity .2s;
+  position:absolute;bottom:98px;left:0;right:0;z-index:9;
+  transform:translateY(10px);opacity:0;pointer-events:none;
+  transition:transform .22s cubic-bezier(.25,0,.2,1),opacity .2s;
 }
 #filter-panel.open{transform:translateY(0);opacity:1;pointer-events:all}
 
-.filter-row{
-  display:flex;gap:10px;padding:4px 18px 8px;
+.frow{
+  display:flex;gap:9px;padding:4px 16px 6px;
   overflow-x:auto;scroll-snap-type:x mandatory;
   -ms-overflow-style:none;scrollbar-width:none;
 }
-.filter-row::-webkit-scrollbar{display:none}
+.frow::-webkit-scrollbar{display:none}
 
-.f-item{
+.fi{/* filter item */
   flex:0 0 auto;scroll-snap-align:start;
   display:flex;flex-direction:column;align-items:center;gap:4px;
-  cursor:pointer;transition:transform .12s;
+  cursor:pointer;transition:transform .1s;
 }
-.f-item:active{transform:scale(.9)}
+.fi:active{transform:scale(.88)}
 
-.f-thumb{
+.fthumb{
   width:54px;height:70px;border-radius:10px;overflow:hidden;
   position:relative;border:2px solid rgba(255,255,255,.08);
   transition:border-color .18s,box-shadow .18s;background:#111;
 }
-.f-item.sel .f-thumb{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,169,110,.3),0 4px 16px rgba(201,169,110,.18)}
+.fi.sel .fthumb{border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,169,110,.25)}
+.fthumb canvas{width:100%;height:100%;display:block;object-fit:cover}
+.fthumb .fvig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(0,0,0,.48) 100%);pointer-events:none}
+.fthumb .flbl{position:absolute;bottom:0;left:0;right:0;padding:3px 3px 4px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);font-size:7.5px;font-weight:700;color:#fff;text-align:center;letter-spacing:.04em}
+.finame{font-size:9px;font-weight:500;color:rgba(255,255,255,.38);letter-spacing:.02em;white-space:nowrap;transition:color .15s}
+.fi.sel .finame{color:var(--gold)}
 
-.f-thumb-canvas{width:100%;height:100%;display:block;object-fit:cover}
-
-/* Analog layers inside each thumbnail */
-.f-grain,.f-vignette,.f-chromab{
-  position:absolute;inset:0;pointer-events:none;border-radius:8px;
-}
-.f-vignette{background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.5) 100%)}
-.f-chromab{mix-blend-mode:screen;opacity:0}
-
-.f-thumb-label{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:3px 4px 5px;
-  background:rgba(0,0,0,.58);backdrop-filter:blur(5px);
-  font-size:7.5px;font-weight:700;color:#fff;text-align:center;
-  letter-spacing:.04em;line-height:1.1;
-}
-.f-name{font-size:9px;font-weight:500;color:rgba(255,255,255,.4);letter-spacing:.02em;white-space:nowrap;transition:color .18s}
-.f-item.sel .f-name{color:var(--gold)}
-
-/* Bottom controls */
+/* Shutter controls */
 .cam-ctrls{
   position:absolute;bottom:0;left:0;right:0;z-index:10;
   display:flex;align-items:center;justify-content:space-between;
-  padding:12px 26px calc(var(--safe-b) + 26px);
+  padding:10px 24px calc(var(--sb) + 24px);
 }
-.gallery-thumb{
+.gthumb{
   width:46px;height:46px;border-radius:11px;
-  background:rgba(0,0,0,.4);backdrop-filter:blur(10px);
-  border:1px solid var(--border2);
-  overflow:hidden;cursor:pointer;
+  background:rgba(0,0,0,.35);backdrop-filter:blur(10px);
+  border:1px solid var(--b2);overflow:hidden;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   transition:transform .1s;
 }
-.gallery-thumb:active{transform:scale(.88)}
-.gallery-thumb img{width:100%;height:100%;object-fit:cover}
-.gallery-thumb svg{width:20px;height:20px;stroke:var(--muted2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gthumb:active{transform:scale(.87)}
+.gthumb img{width:100%;height:100%;object-fit:cover}
+.gthumb svg{width:19px;height:19px;stroke:var(--dim2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 .shutter{
   width:74px;height:74px;border-radius:50%;
-  background:transparent;border:3px solid rgba(255,255,255,.88);
-  padding:6px;cursor:pointer;transition:transform .1s;
+  background:transparent;border:3px solid rgba(255,255,255,.86);
+  padding:5px;cursor:pointer;transition:transform .1s;
 }
 .shutter:active{transform:scale(.9)}
-.shutter-inner{width:100%;height:100%;border-radius:50%;background:#fff;transition:transform .1s}
-.shutter:active .shutter-inner{transform:scale(.86)}
+.shutter-in{width:100%;height:100%;border-radius:50%;background:#fff;transition:transform .1s}
+.shutter:active .shutter-in{transform:scale(.84)}
 
-.counter-pill{
+.cpill{
   width:46px;height:46px;border-radius:11px;
-  background:rgba(0,0,0,.4);backdrop-filter:blur(10px);
-  border:1px solid var(--border2);
+  background:rgba(0,0,0,.35);backdrop-filter:blur(10px);
+  border:1px solid var(--b2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
-.counter-n{font-size:17px;font-weight:900;color:#fff;line-height:1}
-.counter-d{font-size:8px;font-weight:600;color:var(--muted2);line-height:1;margin-top:2px}
+.cpill-n{font-size:16px;font-weight:900;color:#fff;line-height:1}
+.cpill-d{font-size:8px;font-weight:600;color:var(--dim2);line-height:1;margin-top:2px}
 
 #flash-ov{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9999;transition:opacity .05s}
 
-/* ══════════════ GALLERY PAGE ══════════════ */
-#pg-gallery{padding-top:calc(var(--safe-t))}
-.gl-top{
+/* ────────────────────────────────
+   GALLERY
+──────────────────────────────── */
+#pg-gallery{padding-top:var(--st)}
+
+.gl-head{
   display:flex;align-items:flex-start;justify-content:space-between;
-  padding:20px 20px 12px;flex-shrink:0;
+  padding:18px 20px 10px;flex-shrink:0;
 }
-.gl-title-wrap h1{font-size:23px;font-weight:900;letter-spacing:-.022em}
-.gl-title-wrap p{font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--muted2);margin-top:3px;text-transform:uppercase}
+.gl-titles h1{font-size:22px;font-weight:900;letter-spacing:-.022em;color:#fff}
+.gl-titles p{font-size:10px;font-weight:600;letter-spacing:.14em;color:var(--dim2);margin-top:2px;text-transform:uppercase}
 
-/* Tab switcher */
-.gl-tabs{
-  display:flex;gap:2px;
-  padding:0 20px 10px;flex-shrink:0;
-}
-.gl-tab{
-  flex:1;padding:8px 0;text-align:center;
-  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted2);border-radius:8px;cursor:pointer;transition:background .15s,color .15s;
-  border:1px solid transparent;
-}
-.gl-tab.active{background:var(--s2);border-color:var(--border2);color:#fff}
-
-.gl-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.gl-meta-name{font-size:12px;font-weight:300;font-style:italic;color:var(--gold);letter-spacing:.04em;line-height:1.5}
-.gl-meta-amp{font-size:9px;color:var(--muted);text-align:right}
+.gl-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.wname{font-size:12px;font-weight:300;font-style:italic;color:var(--gold);letter-spacing:.04em;line-height:1.55}
+.wamp{font-size:9px;color:var(--dim);text-align:right}
 
 .scan-btn{
-  width:38px;height:38px;border-radius:10px;
-  background:var(--gold-bg);border:1px solid rgba(201,169,110,.22);
+  width:36px;height:36px;border-radius:9px;
+  background:var(--gold-a);border:1px solid rgba(200,169,110,.2);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:2px;cursor:pointer;transition:background .12s,transform .1s;
 }
-.scan-btn:active{transform:scale(.88);background:rgba(201,169,110,.24)}
-.scan-btn svg{width:17px;height:17px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.scan-btn:active{transform:scale(.87);background:rgba(200,169,110,.22)}
+.scan-btn svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .scan-btn span{font-size:7px;font-weight:800;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
 
-.gl-grid-wrap{flex:1;overflow-y:auto;padding:0 2px;-ms-overflow-style:none;scrollbar-width:none}
-.gl-grid-wrap::-webkit-scrollbar{display:none}
-.gl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.gl-item{aspect-ratio:3/4;background:var(--s2);overflow:hidden;cursor:pointer;transition:opacity .1s;position:relative}
-.gl-item:first-child{border-top-left-radius:10px}
-.gl-item:nth-child(3){border-top-right-radius:10px}
+/* Tabs */
+.gl-tabs{
+  display:flex;gap:2px;padding:0 20px 10px;flex-shrink:0;
+}
+.gtab{
+  flex:1;padding:8px;text-align:center;
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim2);border-radius:8px;cursor:pointer;
+  transition:background .14s,color .14s;border:1px solid transparent;
+}
+.gtab.act{background:var(--s2);border-color:var(--b2);color:#fff}
+.gtab-badge{
+  display:inline-block;font-size:8px;background:var(--gold-a);
+  color:var(--gold);border-radius:4px;padding:0 5px;
+  margin-left:4px;vertical-align:middle;
+}
+
+.gl-wrap{flex:1;overflow-y:auto;-ms-overflow-style:none;scrollbar-width:none}
+.gl-wrap::-webkit-scrollbar{display:none}
+.gl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:0 2px}
+.gl-item{aspect-ratio:3/4;background:var(--s2);overflow:hidden;cursor:pointer;transition:opacity .1s}
+.gl-item:first-child{border-top-left-radius:8px}
+.gl-item:nth-child(3){border-top-right-radius:8px}
 .gl-item img{width:100%;height:100%;object-fit:cover;display:block}
-.gl-item:active{opacity:.7}
-.gl-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);grid-column:1/-1;padding:60px 20px;text-align:center}
-.gl-empty svg{width:32px;height:32px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.gl-empty p{font-size:12px;font-weight:500;line-height:1.6}
+.gl-item:active{opacity:.68}
+.gl-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 24px;color:var(--dim)}
+.gl-empty svg{width:28px;height:28px;stroke:var(--dim);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.gl-empty p{font-size:11px;font-weight:500;text-align:center;line-height:1.6;color:var(--dim2)}
 
 .gl-bot{
   display:flex;align-items:center;justify-content:space-between;
-  padding:12px 20px calc(var(--safe-b) + 18px);
-  border-top:1px solid var(--border);flex-shrink:0;
+  padding:12px 20px calc(var(--sb) + 16px);
+  border-top:1px solid var(--b1);flex-shrink:0;
 }
-.ghost-btn{
+.ghost{
   display:flex;align-items:center;gap:5px;background:none;border:none;
-  font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--muted2);
+  font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--dim2);
   cursor:pointer;text-transform:uppercase;transition:color .12s;
 }
-.ghost-btn:active{color:#fff}
-.ghost-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.prim-btn{
-  background:var(--gold);color:#090909;border:none;border-radius:9px;
-  padding:11px 22px;font-size:11px;font-weight:800;letter-spacing:.1em;
+.ghost:active{color:#fff}
+.ghost svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.prim{
+  background:var(--gold);color:#0a0a0a;border:none;border-radius:9px;
+  padding:10px 22px;font-size:11px;font-weight:800;letter-spacing:.1em;
   cursor:pointer;text-transform:uppercase;transition:opacity .12s,transform .1s;
 }
-.prim-btn:active{opacity:.82;transform:scale(.96)}
+.prim:active{opacity:.82;transform:scale(.96)}
 
-/* ══════════════ SINGLE VIEW ══════════════ */
+/* ────────────────────────────────
+   SINGLE VIEW
+──────────────────────────────── */
 #pg-single{background:#000;position:relative}
 #single-img{width:100%;height:100%;object-fit:contain;display:block}
-.single-top{
+.sv-top{
   position:absolute;top:0;left:0;right:0;z-index:5;
-  display:flex;align-items:center;
-  padding:calc(var(--safe-t)+14px) 18px 14px;
-  background:linear-gradient(to bottom,rgba(0,0,0,.72),transparent);
+  padding:calc(var(--st)+14px) 18px 16px;
+  background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);
 }
-.single-bot{
+.sv-bot{
   position:absolute;bottom:0;left:0;right:0;z-index:5;
-  padding:14px 18px calc(var(--safe-b)+22px);
-  background:linear-gradient(to top,rgba(0,0,0,.72),transparent);
+  padding:14px 18px calc(var(--sb)+22px);
+  background:linear-gradient(to top,rgba(0,0,0,.7),transparent);
 }
 .dl-btn{
-  width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);
+  width:100%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);
   backdrop-filter:blur(14px);border-radius:12px;padding:14px;
   display:flex;align-items:center;justify-content:center;gap:8px;
   font-size:12px;font-weight:700;letter-spacing:.1em;color:#fff;
   cursor:pointer;text-transform:uppercase;transition:background .12s;
 }
-.dl-btn:active{background:rgba(255,255,255,.18)}
-.dl-btn svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dl-btn:active{background:rgba(255,255,255,.16)}
+.dl-btn svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-/* ══════════════ FINISH ══════════════ */
-#pg-finish{align-items:center;justify-content:center;gap:20px}
-.finish-ring{width:60px;height:60px;border-radius:50%;background:var(--gold-bg);border:1px solid rgba(201,169,110,.2);display:flex;align-items:center;justify-content:center}
-.finish-ring svg{width:26px;height:26px;fill:var(--gold)}
-.finish-text{text-align:center}
-.finish-text h1{font-size:20px;font-weight:300;font-style:italic;color:var(--gold);letter-spacing:.04em;margin-bottom:8px}
-.finish-text p{font-size:11px;color:var(--muted2);line-height:1.75;max-width:230px}
-.outline-btn{background:transparent;border:1px solid var(--border2);border-radius:10px;padding:12px 28px;font-size:11px;font-weight:700;letter-spacing:.1em;color:#fff;cursor:pointer;text-transform:uppercase;transition:background .12s,transform .1s}
-.outline-btn:active{background:rgba(255,255,255,.06);transform:scale(.96)}
+/* ────────────────────────────────
+   FINISH
+──────────────────────────────── */
+#pg-finish{align-items:center;justify-content:center;gap:22px}
+.fin-ring{width:58px;height:58px;border-radius:50%;background:var(--gold-a);border:1px solid rgba(200,169,110,.18);display:flex;align-items:center;justify-content:center}
+.fin-ring svg{width:24px;height:24px;fill:var(--gold)}
+.fin-text{text-align:center}
+.fin-text h1{font-size:19px;font-weight:300;font-style:italic;color:var(--gold);letter-spacing:.04em;margin-bottom:8px}
+.fin-text p{font-size:11px;color:var(--dim2);line-height:1.75;max-width:220px}
+.ol-btn{background:transparent;border:1px solid var(--b2);border-radius:10px;padding:11px 26px;font-size:11px;font-weight:700;letter-spacing:.1em;color:#fff;cursor:pointer;text-transform:uppercase;transition:background .12s}
+.ol-btn:active{background:rgba(255,255,255,.06)}
 
-/* ══════════════ FACE ID PAGE ══════════════ */
-#pg-faceid{
-  background:rgba(4,4,6,.96);backdrop-filter:blur(22px);z-index:200;
-  align-items:center;gap:12px;
-  padding:calc(var(--safe-t)+16px) 18px calc(var(--safe-b)+16px);
+/* ────────────────────────────────
+   FACE ID PAGE  — lightweight
+──────────────────────────────── */
+#pg-fid{
+  background:#060608;z-index:200;align-items:center;
+  padding:calc(var(--st)+16px) 18px calc(var(--sb)+16px);gap:12px;
 }
-#pg-faceid.off{display:none}
-.fid-head{text-align:center;flex-shrink:0}
-.fid-head h2{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
-.fid-head p{font-size:11px;color:var(--muted2);margin-top:5px;min-height:15px;transition:color .2s}
-.fid-head p.found{color:#30d158}
-.fid-head p.err{color:#ff453a}
+#pg-fid.off{display:none}
 
-.fid-search-info{font-size:10px;color:var(--muted);text-align:center;max-width:340px;line-height:1.65;flex-shrink:0}
+.fid-hd{text-align:center;flex-shrink:0}
+.fid-hd h2{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#fff}
+.fid-status{font-size:11px;color:var(--dim2);margin-top:5px;min-height:15px;transition:color .2s}
+.fid-status.ok{color:#34c759}
+.fid-status.err{color:#ff453a}
 
-.fid-cam-wrap{
-  position:relative;border-radius:18px;overflow:hidden;
-  width:100%;max-width:340px;flex:1;max-height:360px;
-  background:#0a0a0a;border:1px solid var(--border2);flex-shrink:0;
+.fid-info{font-size:10px;color:var(--dim);text-align:center;max-width:310px;line-height:1.65;flex-shrink:0}
+
+.fid-cam{
+  position:relative;border-radius:16px;overflow:hidden;
+  width:100%;max-width:320px;flex:1;max-height:340px;
+  background:#0c0c0e;border:1px solid var(--b2);flex-shrink:0;
 }
-/* NOT mirrored — show as-is (correct orientation) */
-#fid-vid{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(1)}
+/* NOT mirrored */
+#fid-vid{width:100%;height:100%;object-fit:cover;display:block;transform:none}
 #fid-cvs{position:absolute;inset:0;width:100%;height:100%}
 
-@keyframes scanline{0%{top:-2px}100%{top:100%}}
-#scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--gold),transparent);animation:scanline 2.2s linear infinite;z-index:5;opacity:.65;display:none;pointer-events:none}
-#scan-line.active{display:block}
+@keyframes sl{0%{top:0}100%{top:100%}}
+#scan-line{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(to right,transparent,var(--gold),transparent);
+  animation:sl 2s linear infinite;z-index:4;opacity:.6;display:none;pointer-events:none;
+}
+#scan-line.on{display:block}
 
-.fid-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%;max-width:340px;flex-shrink:0}
-.fid-badge{background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:7px 12px;text-align:center;font-size:10px;color:var(--gold);font-weight:600;line-height:1.6}
-.fid-badge b{display:block;font-size:11px;font-weight:800;color:#fff}
-.fid-badge small{font-size:9px;color:var(--muted2);font-weight:500}
+.fid-badge-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%;max-width:320px;flex-shrink:0}
+.fbadge{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:6px 11px;font-size:10px;color:var(--gold);font-weight:600;line-height:1.55}
+.fbadge b{display:block;font-size:11px;font-weight:800;color:#fff}
+.fbadge small{font-size:9px;color:var(--dim2);font-weight:400}
 
 #fid-results{
-  width:100%;max-width:340px;max-height:140px;overflow-y:auto;
-  display:flex;flex-direction:column;gap:6px;flex-shrink:0;
+  width:100%;max-width:320px;max-height:130px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:5px;flex-shrink:0;
   -ms-overflow-style:none;scrollbar-width:none;
 }
 #fid-results::-webkit-scrollbar{display:none}
-.fid-result-item{
-  display:flex;align-items:center;gap:10px;
-  background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;
-  cursor:pointer;transition:background .12s;
+.fres{
+  display:flex;align-items:center;gap:9px;
+  background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:7px 11px;
+  cursor:pointer;transition:background .1s;
 }
-.fid-result-item:active{background:var(--s3)}
-.fid-result-img{width:36px;height:46px;border-radius:6px;object-fit:cover;flex-shrink:0}
-.fid-result-info{flex:1}
-.fid-result-info p{font-size:11px;font-weight:600;color:#fff}
-.fid-result-info small{font-size:10px;color:var(--muted2)}
-.fid-result-badge{font-size:9px;font-weight:800;letter-spacing:.05em;background:var(--gold-bg);color:var(--gold);border-radius:5px;padding:2px 6px;text-transform:uppercase}
+.fres:active{background:var(--s3)}
+.fres img{width:34px;height:44px;border-radius:5px;object-fit:cover;flex-shrink:0}
+.fres-info{flex:1}
+.fres-info p{font-size:11px;font-weight:600;color:#fff}
+.fres-info small{font-size:10px;color:var(--dim2)}
+.fres-pct{font-size:9px;font-weight:800;background:var(--gold-a);color:var(--gold);border-radius:4px;padding:2px 6px;letter-spacing:.04em}
 
-.fid-actions{display:flex;gap:8px;width:100%;max-width:340px;flex-shrink:0}
-.fid-btn{flex:1;border-radius:10px;padding:13px;font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;text-transform:uppercase;border:1px solid var(--border2);background:var(--s2);color:#fff;transition:background .12s}
-.fid-btn:active{background:var(--s3)}
-.fid-btn.gold{background:var(--gold);color:#090909;border-color:var(--gold)}
-.fid-btn.gold:active{opacity:.84}
+.fid-acts{display:flex;gap:7px;width:100%;max-width:320px;flex-shrink:0}
+.fbtn{flex:1;border-radius:9px;padding:12px;font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;text-transform:uppercase;border:1px solid var(--b2);background:var(--s2);color:#fff;transition:background .12s}
+.fbtn:active{background:var(--s3)}
+.fbtn.gold{background:var(--gold);color:#0a0a0a;border-color:var(--gold)}
+.fbtn.gold:active{opacity:.82}
+.fbtn:disabled{opacity:.45;cursor:default}
 
 /* toast */
 #toast{
-  position:fixed;bottom:calc(var(--safe-b)+100px);left:50%;
+  position:fixed;bottom:calc(var(--sb)+96px);left:50%;
   transform:translateX(-50%) translateY(8px);
-  background:rgba(20,20,24,.94);border:1px solid var(--border2);
-  backdrop-filter:blur(16px);border-radius:20px;
+  background:rgba(16,16,20,.94);border:1px solid var(--b2);
+  backdrop-filter:blur(16px);border-radius:18px;
   padding:7px 14px;display:flex;align-items:center;gap:7px;
   font-size:11px;font-weight:600;color:#fff;
-  opacity:0;transition:opacity .18s,transform .18s;
-  pointer-events:none;z-index:800;white-space:nowrap;
+  opacity:0;transition:opacity .17s,transform .17s;pointer-events:none;z-index:800;white-space:nowrap;
 }
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 </style>
 </head>
 <body>
+
 <div id="flash-ov"></div>
 
-<!-- ══ CAMERA ══ -->
+<!-- ═══ CAMERA ═══ -->
 <div id="pg-cam" class="page">
   <div id="cam-vp">
-    <div class="vp-fade-top"></div>
-    <div class="vp-fade-bot"></div>
+    <div class="vp-top"></div>
+    <div class="vp-bot"></div>
     <video id="vid-main" autoplay muted playsinline></video>
-    <!-- Analog overlay layers on live view -->
-    <canvas id="cam-grain"></canvas>
-    <div id="cam-vignette"></div>
-    <canvas id="cam-chromab"></canvas>
+    <div id="cam-vig"></div>
 
     <!-- Top bar -->
     <div class="cam-bar">
-      <button class="ico-btn" id="btn-flip" onclick="flipCam()">
+      <button class="ib" id="btn-flip" onclick="flipCam()" aria-label="Flip camera">
         <svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       </button>
-      <div class="cam-bar-center">
-        <button class="ico-btn" id="btn-flash" onclick="cycleFlash()">
-          <!-- flash icon rendered by JS -->
-          <div class="flash-lbl" id="flash-lbl"></div>
-        </button>
-        <span class="facing-lbl" id="lbl-facing">FRONT</span>
-      </div>
-      <button class="ico-btn" id="btn-filter-toggle" onclick="toggleFilterPanel()">
+
+      <button class="ib" id="btn-flash" data-mode="auto" onclick="cycleFlash()" aria-label="Flash">
+        <svg id="flash-svg" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </button>
+
+      <button class="ib" id="btn-flt" onclick="toggleFP()" aria-label="Filter">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
       </button>
     </div>
 
-    <!-- Filter strip -->
+    <!-- Filter panel -->
     <div id="filter-panel">
-      <div class="filter-row" id="filter-row"></div>
+      <div class="frow" id="frow"></div>
     </div>
 
     <!-- Controls -->
     <div class="cam-ctrls">
-      <div class="gallery-thumb" onclick="goTo('pg-gallery',loadGallery)" id="gthumb">
+      <div class="gthumb" onclick="toGallery()" id="gthumb">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
       </div>
-      <div class="shutter" id="shutter" onclick="capture()"><div class="shutter-inner"></div></div>
-      <div class="counter-pill">
-        <span class="counter-n" id="cnt-n">0</span>
-        <span class="counter-d" id="cnt-d">/ 20</span>
+      <div class="shutter" onclick="capture()"><div class="shutter-in"></div></div>
+      <div class="cpill">
+        <span class="cpill-n" id="cnt">0</span>
+        <span class="cpill-d">/ 20</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ GALLERY ══ -->
+<!-- ═══ GALLERY ═══ -->
 <div id="pg-gallery" class="page off">
-  <div class="gl-top">
-    <div class="gl-title-wrap"><h1>Gallery</h1><p>Your moments</p></div>
+  <div class="gl-head">
+    <div class="gl-titles"><h1>Gallery</h1><p>Your moments</p></div>
     <div class="gl-right">
-      <button class="scan-btn" onclick="goTo('pg-faceid',startFaceID)">
+      <button class="scan-btn" onclick="goFID()" aria-label="Face scan">
         <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
         <span>Scan</span>
       </button>
-      <div><div class="gl-meta-name">Zuzu</div><div class="gl-meta-amp">&amp;</div><div class="gl-meta-name">Zaza</div></div>
+      <div><div class="wname">Zuzu</div><div class="wamp">&amp;</div><div class="wname">Zaza</div></div>
     </div>
   </div>
 
-  <!-- Tab switcher: All / My Faces -->
   <div class="gl-tabs">
-    <div class="gl-tab active" id="tab-all" onclick="switchTab('all')">All Photos</div>
-    <div class="gl-tab" id="tab-faces" onclick="switchTab('faces')">My Faces <span id="face-count" style="font-size:9px;background:var(--gold-bg);color:var(--gold);border-radius:4px;padding:1px 5px;margin-left:4px;display:none"></span></div>
+    <div class="gtab act" id="tab-all" onclick="setTab('all')">All Photos</div>
+    <div class="gtab" id="tab-faces" onclick="setTab('faces')">My Faces <span class="gtab-badge" id="face-badge" style="display:none"></span></div>
   </div>
 
-  <div class="gl-grid-wrap">
-    <div class="gl-grid" id="gl-grid">
-      <div class="gl-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p>No photos yet</p></div>
-    </div>
+  <div class="gl-wrap">
+    <div class="gl-grid" id="gl-grid"></div>
   </div>
 
   <div class="gl-bot">
-    <button class="ghost-btn" onclick="goCamera()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
-    <button class="prim-btn" onclick="goTo('pg-finish')">Finish</button>
+    <button class="ghost" onclick="toCamera()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
+    <button class="prim" onclick="show('pg-finish')">Finish</button>
   </div>
 </div>
 
-<!-- ══ SINGLE ══ -->
+<!-- ═══ SINGLE ═══ -->
 <div id="pg-single" class="page off">
-  <div class="single-top">
-    <button class="ghost-btn" id="single-back-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
+  <div class="sv-top">
+    <button class="ghost" id="sv-back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
   </div>
   <img id="single-img" src="" alt="">
-  <div class="single-bot">
+  <div class="sv-bot">
     <button class="dl-btn" onclick="dlPhoto()">
       <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
       Save Photo
@@ -428,373 +421,250 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   </div>
 </div>
 
-<!-- ══ FINISH ══ -->
+<!-- ═══ FINISH ═══ -->
 <div id="pg-finish" class="page off">
-  <div class="finish-ring"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-  <div class="finish-text"><h1>Zuzu &amp; Zaza</h1><p>Terima kasih sudah mengabadikan momen indah bersama kami.</p></div>
-  <button class="outline-btn" onclick="restartApp()">Take More Photos</button>
+  <div class="fin-ring"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+  <div class="fin-text"><h1>Zuzu &amp; Zaza</h1><p>Terima kasih sudah mengabadikan momen bersama kami.</p></div>
+  <button class="ol-btn" onclick="toCamera()">Take More Photos</button>
 </div>
 
-<!-- ══ FACE ID / SEARCH ══ -->
-<div id="pg-faceid" class="page off">
-  <div class="fid-head"><h2>Face Search</h2><p id="fid-status">Point your face at the camera</p></div>
-  <p class="fid-search-info">Scan your face to automatically find all photos of you from the gallery.</p>
-  <div class="fid-cam-wrap">
+<!-- ═══ FACE ID ═══ -->
+<div id="pg-fid" class="page off">
+  <div class="fid-hd"><h2>Face Search</h2><p class="fid-status" id="fid-st">Initializing…</p></div>
+  <p class="fid-info">Scan your face to find all your photos in the gallery automatically.</p>
+
+  <div class="fid-cam">
     <video id="fid-vid" autoplay muted playsinline></video>
     <canvas id="fid-cvs"></canvas>
     <div id="scan-line"></div>
   </div>
-  <div class="fid-badges" id="fid-badges"></div>
+
+  <div class="fid-badge-row" id="fid-badges"></div>
   <div id="fid-results"></div>
-  <div class="fid-actions">
-    <button class="fid-btn gold" id="btn-do-search" onclick="doFaceSearch()" style="display:none">Search My Photos</button>
-    <button class="fid-btn" onclick="closeFaceID()">Close</button>
+
+  <div class="fid-acts">
+    <button class="fbtn gold" id="btn-search" onclick="doSearch()" style="display:none">Search My Photos</button>
+    <button class="fbtn" onclick="closeFID()">Close</button>
   </div>
 </div>
 
-<!-- ══ TOAST ══ -->
-<div id="toast"><svg id="t-icon" viewBox="0 0 24 24"></svg><span id="t-msg"></span></div>
+<!-- toast -->
+<div id="toast"><svg id="t-ico" viewBox="0 0 24 24"></svg><span id="t-msg"></span></div>
 
 <script>
-/* ════ SUPABASE ════ */
+/* ═══ SUPABASE ═══ */
 const SB = window.supabase.createClient(
   "https://plcrvnyfhczykdqrjhfs.supabase.co",
   "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B"
 );
-const MODEL_URL = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights";
-const MAX_PHOTOS = 20;
+const MODELS = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights";
+const MAX = 20;
 
-/* ════════════════════════════════════════
-   FILTERS — with full analog character
-════════════════════════════════════════ */
+/* ═══ FILTERS ═══ */
 const FILTERS = [
   {
     id:"dfun", name:"D-Fun",
-    // Lomo/toy camera: saturated, bright, plastic lens
-    videoFilter:"saturate(155%) contrast(112%) brightness(112%) hue-rotate(-8deg)",
-    canvasFilter:"saturate(155%) contrast(112%) brightness(112%) hue-rotate(-8deg)",
-    grain:8, vignette:.42, chromab:true,
-    chromabColor:"rgba(255,60,60,0.06)",
-    thumbTint:"rgba(255,100,80,0.15)"
+    v:"saturate(160%) contrast(115%) brightness(115%) hue-rotate(-10deg)",
+    c:"saturate(160%) contrast(115%) brightness(115%) hue-rotate(-10deg)",
+    grain:10, vig:.44, chromab:"rgba(255,50,30,0.07)"
   },
   {
     id:"instax", name:"Insta-X",
-    // Polaroid: faded, lifted blacks, warm
-    videoFilter:"contrast(88%) brightness(112%) saturate(75%) sepia(22%)",
-    canvasFilter:"contrast(88%) brightness(112%) saturate(75%) sepia(22%)",
-    grain:6, vignette:.28, chromab:false,
-    thumbTint:"rgba(255,220,160,0.1)"
+    v:"contrast(86%) brightness(114%) saturate(72%) sepia(24%)",
+    c:"contrast(86%) brightness(114%) saturate(72%) sepia(24%)",
+    grain:6, vig:.26, chromab:null
   },
   {
     id:"vista400", name:"Vista 400",
-    // Fuji: cool-neutral, slight grain, crisp
-    videoFilter:"saturate(82%) contrast(106%) brightness(100%) hue-rotate(175deg) sepia(8%)",
-    canvasFilter:"saturate(82%) contrast(106%) brightness(100%) hue-rotate(175deg) sepia(8%)",
-    grain:12, vignette:.32, chromab:true,
-    chromabColor:"rgba(60,100,255,0.05)",
-    thumbTint:"rgba(100,160,220,0.1)"
+    v:"saturate(80%) contrast(108%) brightness(100%) hue-rotate(172deg) sepia(10%)",
+    c:"saturate(80%) contrast(108%) brightness(100%) hue-rotate(172deg) sepia(10%)",
+    grain:13, vig:.34, chromab:"rgba(40,90,220,0.06)"
   },
   {
     id:"portra160", name:"Portra 160",
-    // Warm skin tones, soft, lifted shadows
-    videoFilter:"contrast(92%) brightness(106%) saturate(88%) sepia(28%) hue-rotate(-4deg)",
-    canvasFilter:"contrast(92%) brightness(106%) saturate(88%) sepia(28%) hue-rotate(-4deg)",
-    grain:7, vignette:.24, chromab:false,
-    thumbTint:"rgba(210,170,100,0.12)"
+    v:"contrast(90%) brightness(108%) saturate(85%) sepia(30%) hue-rotate(-5deg)",
+    c:"contrast(90%) brightness(108%) saturate(85%) sepia(30%) hue-rotate(-5deg)",
+    grain:7, vig:.22, chromab:null
   },
   {
     id:"bwnoir", name:"BW Noir",
-    // High contrast B&W, deep shadows
-    videoFilter:"grayscale(100%) contrast(140%) brightness(86%)",
-    canvasFilter:"grayscale(100%) contrast(140%) brightness(86%)",
-    grain:18, vignette:.55, chromab:false,
-    thumbTint:"rgba(0,0,0,0.2)"
+    v:"grayscale(100%) contrast(142%) brightness(84%)",
+    c:"grayscale(100%) contrast(142%) brightness(84%)",
+    grain:20, vig:.58, chromab:null
   }
 ];
 
-/* ════ STATE ════ */
-let stream = null, count = 0, facing = "user";
-let filterIdx = 0, filterOpen = false;
-let flashMode = "auto"; // "auto"|"on"|"off"
-let thumbRaf = null, thumbCanvases = [];
-let galleryData = [], faceMatchUrls = [];
-let currentTab = "all";
+/* ═══ STATE ═══ */
+let stream=null, count=0, facing="user";
+let fi=0, fpOpen=false, flashMode="auto";
+let allPhotos=[], faceMatches=[], activeTab="all";
+let fidStream=null, fidTimer=null, fidLoaded=false, capturedDesc=null;
+let thumbCvs=[];
 
-/* ════ NAVIGATION ════ */
-function goTo(id, cb) {
-  document.querySelectorAll('.page').forEach(p => p.classList.add('off'));
+/* ═══ PAGE NAV ═══ */
+function show(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('off'));
   document.getElementById(id).classList.remove('off');
-  if (cb) cb();
 }
 
-function goCamera() {
-  count = 0;
-  document.getElementById('cnt-n').textContent = '0';
-  goTo('pg-cam');
-  startCamera();
+function toCamera() {
+  count=0; document.getElementById('cnt').textContent='0';
+  show('pg-cam'); startCam();
 }
 
-function restartApp() { goCamera(); }
+function toGallery() {
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  show('pg-gallery'); loadGallery();
+}
 
-/* ════ CAMERA ════ */
-const vidMain = document.getElementById('vid-main');
+function goFID() { show('pg-fid'); startFID(); }
 
-async function startCamera() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+/* ═══ CAMERA ═══ */
+const vid = document.getElementById('vid-main');
+let thumbRaf = null;
+
+async function startCam() {
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:{exact:facing}, width:{ideal:1280}, height:{ideal:960} }, audio:false
+      video:{facingMode:{exact:facing},width:{ideal:1280},height:{ideal:960}},audio:false
     });
   } catch {
     try { stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false}); }
-    catch(e){ console.error("Camera failed",e); return; }
+    catch(e){console.error(e);return;}
   }
-  vidMain.srcObject = stream;
-  // Front: mirror for natural selfie feel; back: no mirror
-  vidMain.style.transform = facing==="user" ? "scaleX(-1)" : "scaleX(1)";
-  applyVideoFilter(filterIdx);
-  startAnalogOverlay();
-  if (!thumbRaf) thumbRaf = requestAnimationFrame(drawThumbs);
+  vid.srcObject = stream;
+  vid.style.transform = facing==="user"?"scaleX(-1)":"scaleX(1)";
+  applyVF(fi);
+  updateVigOverlay(fi);
+  if(!thumbRaf) thumbRaf=requestAnimationFrame(drawThumbs);
 }
 
 function flipCam() {
-  facing = facing==="user" ? "environment" : "user";
-  document.getElementById('lbl-facing').textContent = facing==="user" ? "FRONT" : "BACK";
-  startCamera();
+  facing = facing==="user"?"environment":"user";
+  startCam();
 }
 
-/* ════ FLASH CONTROL ════ */
-const FLASH_STATES = ["auto","on","off"];
-const FLASH_SVG = {
-  auto:`<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:rgba(255,255,255,.7);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  on:`<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:#FFD60A;fill:#FFD60A;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  off:`<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:rgba(255,255,255,.25);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><line x1="1" y1="1" x2="23" y2="23" stroke="rgba(255,100,80,.7)"/></svg>`
-};
-const FLASH_LABELS = {auto:"AUTO",on:"ON",off:""};
-
-function renderFlashBtn() {
-  const btn = document.getElementById('btn-flash');
-  btn.innerHTML = FLASH_SVG[flashMode] + `<div class="flash-lbl" id="flash-lbl" style="${flashMode==='on'?'display:block':''}">${FLASH_LABELS[flashMode]}</div>`;
-}
-
+/* ═══ FLASH — cycle only, blink at capture ═══ */
+const FLASH_MODES=["auto","on","off"];
 function cycleFlash() {
-  const i = FLASH_STATES.indexOf(flashMode);
-  flashMode = FLASH_STATES[(i+1) % 3];
-  renderFlashBtn();
-  // If back cam + flash on, enable torch now
-  if (flashMode==="on" && facing==="environment") torchOn();
-  else if (flashMode==="off" || facing==="user") torchOff();
+  flashMode = FLASH_MODES[(FLASH_MODES.indexOf(flashMode)+1)%3];
+  renderFlash();
+  if(flashMode==="on" && facing==="environment") torchSet(true);
+  else torchSet(false);
 }
-
-async function torchOn() {
-  if(!stream) return;
-  const vt = stream.getVideoTracks()[0];
-  const cap = vt.getCapabilities?.() || {};
-  if(cap.torch) try{ await vt.applyConstraints({advanced:[{torch:true}]}); }catch{}
-}
-async function torchOff() {
-  if(!stream) return;
-  const vt = stream.getVideoTracks()[0];
-  const cap = vt.getCapabilities?.() || {};
-  if(cap.torch) try{ await vt.applyConstraints({advanced:[{torch:false}]}); }catch{}
-}
-
-/* ════ ANALOG OVERLAYS ON LIVE VIEW ════ */
-let grainRaf = null;
-const camGrain   = document.getElementById('cam-grain');
-const camVig     = document.getElementById('cam-vignette');
-const camChromab = document.getElementById('cam-chromab');
-
-function startAnalogOverlay() {
-  if (grainRaf) cancelAnimationFrame(grainRaf);
-  renderAnalogOverlay();
-}
-
-function renderAnalogOverlay() {
-  const f = FILTERS[filterIdx];
-  const w = vidMain.clientWidth || window.innerWidth;
-  const h = vidMain.clientHeight || window.innerHeight;
-
-  // Grain on cam-grain canvas
-  if (f.grain > 0) {
-    camGrain.style.opacity = Math.min(1, f.grain/22).toFixed(2);
-    camGrain.width = Math.floor(w/3); // low-res for perf
-    camGrain.height = Math.floor(h/3);
-    const ctx = camGrain.getContext('2d');
-    const id  = ctx.createImageData(camGrain.width, camGrain.height);
-    const d   = id.data;
-    for (let i=0;i<d.length;i+=4) {
-      const v = Math.random()*255|0;
-      d[i]=d[i+1]=d[i+2]=v; d[i+3]=255;
-    }
-    ctx.putImageData(id,0,0);
-    camGrain.style.cssText += ";position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:overlay;pointer-events:none;z-index:3;image-rendering:pixelated";
+function renderFlash() {
+  const btn=document.getElementById('btn-flash');
+  btn.dataset.mode=flashMode;
+  const svg=document.getElementById('flash-svg');
+  if(flashMode==="off"){
+    svg.innerHTML=`<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><line x1="2" y1="2" x2="22" y2="22"/>`;
   } else {
-    camGrain.style.opacity = "0";
+    svg.innerHTML=`<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`;
   }
-
-  // Vignette
-  camVig.style.opacity = f.vignette.toFixed(2);
-
-  // Chromatic aberration: offset canvas with color tint
-  if (f.chromab && f.chromabColor) {
-    camChromab.style.opacity = "1";
-    camChromab.style.cssText += ";position:absolute;left:3px;top:2px;width:100%;height:100%;pointer-events:none;z-index:4;mix-blend-mode:screen";
-    camChromab.width = 2; camChromab.height = 2;
-    const ctx = camChromab.getContext('2d');
-    ctx.fillStyle = f.chromabColor;
-    ctx.fillRect(0,0,2,2);
-  } else {
-    camChromab.style.opacity = "0";
-  }
-
-  grainRaf = requestAnimationFrame(renderAnalogOverlay);
+}
+async function torchSet(on) {
+  if(!stream) return;
+  const vt=stream.getVideoTracks()[0];
+  const cap=vt.getCapabilities?.()??{};
+  if(cap.torch) try{await vt.applyConstraints({advanced:[{torch:on}]});}catch{}
 }
 
-/* ════ FILTER PANEL ════ */
-function buildFilterStrip() {
-  const row = document.getElementById('filter-row');
-  row.innerHTML = "";
-  thumbCanvases = [];
-
-  FILTERS.forEach((f,i) => {
-    const item = document.createElement('div');
-    item.className = "f-item" + (i===0?" sel":"");
-    item.onclick = () => selectFilter(i);
-
-    const thumb = document.createElement('div');
-    thumb.className = "f-thumb";
-
-    // Live preview canvas
-    const cvs = document.createElement('canvas');
-    cvs.className = "f-thumb-canvas";
-    cvs.width = 54; cvs.height = 70;
-    cvs.style.filter = f.videoFilter || "";
-    thumbCanvases.push(cvs);
+/* ═══ FILTER PANEL ═══ */
+function buildFilters() {
+  const row=document.getElementById('frow');
+  row.innerHTML=""; thumbCvs=[];
+  FILTERS.forEach((f,i)=>{
+    const item=document.createElement('div');
+    item.className="fi"+(i===0?" sel":"");
+    item.onclick=()=>pickFilter(i);
+    const thumb=document.createElement('div');
+    thumb.className="fthumb";
+    const cvs=document.createElement('canvas');
+    cvs.width=54;cvs.height=70;
+    cvs.style.filter=f.v;
+    thumbCvs.push(cvs);
     thumb.appendChild(cvs);
-
-    // Vignette overlay
-    const vig = document.createElement('div');
-    vig.className = "f-vignette";
-    vig.style.opacity = f.vignette;
-    thumb.appendChild(vig);
-
-    // Chromatic aberration overlay
-    if (f.chromab) {
-      const ch = document.createElement('div');
-      ch.className = "f-chromab";
-      ch.style.cssText = `opacity:.7;background:linear-gradient(135deg,${f.chromabColor||"rgba(255,0,0,.06)"} 0%,transparent 60%)`;
-      thumb.appendChild(ch);
-    }
-
-    const lbl = document.createElement('div');
-    lbl.className = "f-thumb-label";
-    lbl.textContent = f.name;
+    const vig=document.createElement('div');vig.className="fvig";
+    vig.style.opacity=f.vig;thumb.appendChild(vig);
+    const lbl=document.createElement('div');lbl.className="flbl";lbl.textContent=f.name;
     thumb.appendChild(lbl);
-
-    const name = document.createElement('div');
-    name.className = "f-name";
-    name.textContent = f.name;
-
-    item.appendChild(thumb);
-    item.appendChild(name);
+    const name=document.createElement('div');name.className="finame";name.textContent=f.name;
+    item.appendChild(thumb);item.appendChild(name);
     row.appendChild(item);
   });
 }
 
 function drawThumbs() {
-  if (vidMain.readyState >= 2) {
-    thumbCanvases.forEach(cvs => {
-      const ctx = cvs.getContext('2d');
+  if(vid.readyState>=2){
+    thumbCvs.forEach(c=>{
+      const ctx=c.getContext('2d');
       ctx.save();
-      // Mirror thumbnail for front cam
-      if (facing==="user") { ctx.translate(54,0); ctx.scale(-1,1); }
-      ctx.drawImage(vidMain,0,0,54,70);
+      if(facing==="user"){ctx.translate(54,0);ctx.scale(-1,1);}
+      ctx.drawImage(vid,0,0,54,70);
       ctx.restore();
     });
   }
-  thumbRaf = requestAnimationFrame(drawThumbs);
+  thumbRaf=requestAnimationFrame(drawThumbs);
 }
 
-function toggleFilterPanel() {
-  filterOpen = !filterOpen;
-  document.getElementById('filter-panel').classList.toggle('open', filterOpen);
-  document.getElementById('btn-filter-toggle').classList.toggle('lit', filterOpen);
+function toggleFP() {
+  fpOpen=!fpOpen;
+  document.getElementById('filter-panel').classList.toggle('open',fpOpen);
+  document.getElementById('btn-flt').classList.toggle('open',fpOpen);
 }
 
-function selectFilter(i) {
-  filterIdx = i;
-  applyVideoFilter(i);
-  document.querySelectorAll('.f-item').forEach((el,j)=>el.classList.toggle('sel',j===i));
-  setTimeout(()=>{
-    filterOpen = false;
-    document.getElementById('filter-panel').classList.remove('open');
-    document.getElementById('btn-filter-toggle').classList.remove('lit');
-  }, 280);
+function pickFilter(i) {
+  fi=i;
+  applyVF(i);
+  updateVigOverlay(i);
+  document.querySelectorAll('.fi').forEach((el,j)=>el.classList.toggle('sel',j===i));
+  setTimeout(()=>{fpOpen=false;document.getElementById('filter-panel').classList.remove('open');document.getElementById('btn-flt').classList.remove('open');},260);
 }
 
-function applyVideoFilter(i) {
-  vidMain.style.filter = FILTERS[i].videoFilter || "";
+function applyVF(i) { vid.style.filter=FILTERS[i].v||""; }
+
+function updateVigOverlay(i) {
+  // Show vignette overlay on camera view (no grain — removed)
+  document.getElementById('cam-vig').style.opacity = FILTERS[i].vig;
 }
 
-/* ════ CAPTURE — non-blocking ════ */
+/* ═══ CAPTURE ═══ */
 function capture() {
-  if (count >= MAX_PHOTOS) { goTo('pg-gallery', loadGallery); return; }
-  const isBack = facing==="environment";
-  const doFlash = flashMode==="on" || flashMode==="auto";
-
-  if (doFlash) {
-    if (isBack) {
-      torchOn();
-      setTimeout(() => { snapshotAndUpload(); setTimeout(torchOff, 180); }, 55);
-    } else {
-      const fl = document.getElementById('flash-ov');
-      fl.style.opacity = "1";
-      setTimeout(() => { snapshotAndUpload(); setTimeout(()=>{ fl.style.opacity="0"; }, 90); }, 55);
-    }
-  } else {
-    snapshotAndUpload();
-  }
+  if(count>=MAX){toGallery();return;}
+  const isBack=facing==="environment";
+  const doFlash=flashMode==="on"||flashMode==="auto";
+  if(doFlash){
+    if(isBack){torchSet(true);setTimeout(()=>{snap();setTimeout(()=>torchSet(false),160);},55);}
+    else{const fl=document.getElementById('flash-ov');fl.style.opacity="1";setTimeout(()=>{snap();setTimeout(()=>{fl.style.opacity="0";},90);},55);}
+  } else snap();
 }
 
-async function snapshotAndUpload() {
-  const W = vidMain.videoWidth||640, H = vidMain.videoHeight||480;
-  const cvs = document.createElement('canvas');
-  cvs.width = W; cvs.height = H;
-  const ctx = cvs.getContext('2d');
-  const f = FILTERS[filterIdx];
-
+async function snap() {
+  const f=FILTERS[fi];
+  const W=vid.videoWidth||640, H=vid.videoHeight||480;
+  const cvs=document.createElement('canvas');cvs.width=W;cvs.height=H;
+  const ctx=cvs.getContext('2d');
   ctx.save();
-  // Front camera: flip captured image (mirror selfie)
-  if (facing==="user") { ctx.translate(W,0); ctx.scale(-1,1); }
-  ctx.filter = f.canvasFilter || "none";
-  ctx.drawImage(vidMain,0,0,W,H);
+  if(facing==="user"){ctx.translate(W,0);ctx.scale(-1,1);}
+  ctx.filter=f.c||"none";
+  ctx.drawImage(vid,0,0,W,H);
   ctx.restore();
-
-  // Film grain
-  if (f.grain > 0) addGrain(ctx, W, H, f.grain);
-  // Vignette
-  if (f.vignette > 0) addVignette(ctx, W, H, f.vignette);
-  // Chromatic aberration
-  if (f.chromab) addChromab(ctx, W, H, f.chromabColor);
-
-  // Increment counter immediately
-  count++;
-  document.getElementById('cnt-n').textContent = count;
-  if (count >= MAX_PHOTOS) setTimeout(()=>goTo('pg-gallery',loadGallery), 350);
-
-  // Upload in background
-  cvs.toBlob(async blob => {
-    if (!blob) return;
-    const name = `photo_${Date.now()}_${Math.random().toString(36).slice(2,6)}.jpg`;
-    const {error} = await SB.storage.from('galeri-foto').upload(name,blob,{contentType:'image/jpeg'});
-    if (error) toast("Upload failed","err");
-    else toast("Saved ✓","ok");
+  if(f.grain>0) addGrain(ctx,W,H,f.grain);
+  if(f.vig>0)   addVig(ctx,W,H,f.vig);
+  if(f.chromab) addChromab(ctx,W,H,f.chromab);
+  count++;document.getElementById('cnt').textContent=count;
+  if(count>=MAX)setTimeout(toGallery,320);
+  cvs.toBlob(async blob=>{
+    if(!blob) return;
+    const name=`p_${Date.now()}_${Math.random().toString(36).slice(2,5)}.jpg`;
+    const{error}=await SB.storage.from('galeri-foto').upload(name,blob,{contentType:'image/jpeg'});
+    toast(error?"Upload failed":"Saved ✓",error?"err":"ok");
   },'image/jpeg',0.92);
 }
 
-function addGrain(ctx, w, h, amt) {
-  const d = ctx.getImageData(0,0,w,h), px=d.data;
+function addGrain(ctx,w,h,amt) {
+  const d=ctx.getImageData(0,0,w,h),px=d.data;
   for(let i=0;i<px.length;i+=4){
     const n=(Math.random()-.5)*amt*2;
     px[i]=Math.max(0,Math.min(255,px[i]+n));
@@ -803,63 +673,44 @@ function addGrain(ctx, w, h, amt) {
   }
   ctx.putImageData(d,0,0);
 }
-
-function addVignette(ctx, w, h, strength) {
-  const g=ctx.createRadialGradient(w/2,h/2,h*.25,w/2,h/2,h*.72);
-  g.addColorStop(0,'rgba(0,0,0,0)');
-  g.addColorStop(1,`rgba(0,0,0,${strength})`);
-  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+function addVig(ctx,w,h,s) {
+  const g=ctx.createRadialGradient(w/2,h/2,h*.24,w/2,h/2,h*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${s})`);
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+}
+function addChromab(ctx,w,h,color) {
+  ctx.save();ctx.globalAlpha=.15;ctx.globalCompositeOperation="screen";
+  ctx.translate(3,2);ctx.fillStyle=color;ctx.fillRect(0,0,w,h);ctx.restore();
 }
 
-function addChromab(ctx, w, h, color) {
-  ctx.save();
-  ctx.globalAlpha = 0.18;
-  ctx.globalCompositeOperation = "screen";
-  ctx.translate(3, 2);
-  ctx.filter = "none";
-  // Draw a subtle color-shifted copy
-  ctx.fillStyle = color || "rgba(255,0,0,0.1)";
-  ctx.fillRect(0,0,w,h);
-  ctx.restore();
-}
-
-/* ════ GALLERY ════ */
+/* ═══ GALLERY ═══ */
 async function loadGallery() {
-  renderGrid(null); // loading state
-  const {data, error} = await SB.storage.from('galeri-foto').list('',{
-    limit:100, sortBy:{column:'created_at',order:'desc'}
+  renderGrid(null);
+  const{data,error}=await SB.storage.from('galeri-foto').list('',{limit:100,sortBy:{column:'created_at',order:'desc'}});
+  if(error||!data?.length){allPhotos=[];renderGrid([]);return;}
+  allPhotos=data.filter(f=>f.name!=='.emptyFolderPlaceholder').map(f=>{
+    const{data:pu}=SB.storage.from('galeri-foto').getPublicUrl(f.name);
+    return{name:f.name,url:pu.publicUrl};
   });
-  if (error||!data?.length) { galleryData=[]; renderGrid([]); return; }
-  galleryData = data
-    .filter(f=>f.name!=='.emptyFolderPlaceholder')
-    .map(f=>{ const {data:pu}=SB.storage.from('galeri-foto').getPublicUrl(f.name); return {name:f.name,url:pu.publicUrl}; });
-
-  renderGrid(galleryData);
-  // Update gallery thumb
-  if (galleryData.length) {
-    const btn = document.getElementById('gthumb');
-    btn.innerHTML = `<img src="${galleryData[0].url}">`;
+  renderGrid(allPhotos);
+  if(allPhotos.length){
+    const b=document.getElementById('gthumb');
+    b.innerHTML=`<img src="${allPhotos[0].url}">`;
   }
 }
 
-let activeTab = "all";
-function switchTab(tab) {
-  activeTab = tab;
-  document.getElementById('tab-all').classList.toggle('active', tab==="all");
-  document.getElementById('tab-faces').classList.toggle('active', tab==="faces");
-  if (tab==="all") renderGrid(galleryData);
-  else renderGrid(faceMatchUrls.map(url=>({url})));
+function setTab(t) {
+  activeTab=t;
+  document.getElementById('tab-all').classList.toggle('act',t==='all');
+  document.getElementById('tab-faces').classList.toggle('act',t==='faces');
+  renderGrid(t==='all' ? allPhotos : faceMatches);
 }
 
 function renderGrid(items) {
-  const grid = document.getElementById('gl-grid');
-  if (items===null) {
-    grid.innerHTML=`<div class="gl-empty"><p style="color:var(--muted2)">Loading…</p></div>`; return;
-  }
-  if (!items.length) {
-    const msg = activeTab==="faces"
-      ? "No face matches yet.<br>Use Face Scan to find your photos."
-      : "No photos yet.";
+  const grid=document.getElementById('gl-grid');
+  if(items===null){grid.innerHTML=`<div class="gl-empty"><p>Loading…</p></div>`;return;}
+  if(!items.length){
+    const msg=activeTab==='faces'?"Use Face Scan to find<br>your photos automatically.":"No photos yet.";
     grid.innerHTML=`<div class="gl-empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><p>${msg}</p></div>`;
     return;
   }
@@ -870,231 +721,243 @@ function renderGrid(items) {
     el.innerHTML=`<img src="${item.url}" loading="lazy">`;
     el.onclick=()=>{
       document.getElementById('single-img').src=item.url;
-      document.getElementById('single-back-btn').onclick=()=>goTo('pg-gallery');
-      goTo('pg-single');
+      document.getElementById('sv-back').onclick=()=>show('pg-gallery');
+      show('pg-single');
     };
     grid.appendChild(el);
   });
 }
 
-/* ════ DOWNLOAD ════ */
+/* ═══ DOWNLOAD ═══ */
 async function dlPhoto() {
-  const url = document.getElementById('single-img').src;
-  if (!url) return;
-  try {
+  const url=document.getElementById('single-img').src;
+  if(!url) return;
+  try{
     const b=await fetch(url).then(r=>r.blob());
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(b); a.download=`booth_${Date.now()}.jpg`;
-    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),200);
-  } catch { window.open(url,'_blank'); }
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`booth_${Date.now()}.jpg`;
+    a.click();setTimeout(()=>URL.revokeObjectURL(a.href),200);
+  }catch{window.open(url,'_blank');}
 }
 
-/* ════ TOAST ════ */
-let toastT;
-function toast(msg, type='ok') {
-  const el=document.getElementById('toast');
+/* ═══ TOAST ═══ */
+let tT;
+function toast(msg,type='ok') {
+  const el=document.getElementById('toast'),ico=document.getElementById('t-ico');
   document.getElementById('t-msg').textContent=msg;
-  document.getElementById('t-icon').innerHTML=type==='ok'
-    ?`<polyline points="20 6 9 17 4 12"/>`
-    :`<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>`;
+  ico.innerHTML=type==='ok'?`<polyline points="20 6 9 17 4 12"/>`:`<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>`;
   el.style.color=type==='ok'?'#fff':'#ff453a';
-  el.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),1700);
+  el.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>el.classList.remove('on'),1700);
 }
 
-/* ════ FACE ID SEARCH ════ */
-let fidStream=null, fidRaf=null, fidLoaded=false, capturedDescriptor=null, isFidScanning=false;
+/* ═══════════════════════════════════════
+   FACE ID — lightweight version
+   Uses TinyFaceDetector for live scan (fast)
+   Uses SsdMobilenetv1 only for search (accuracy)
+   Detection throttled to 500ms interval
+═══════════════════════════════════════ */
+let fidModelsLoaded=false;
+let fidScanActive=false;
+let fidLastDetect=0;
+let fidDetectId=null;
 
-async function loadFaceModels() {
-  if (fidLoaded) return true;
-  setFidStatus("Loading AI models… (first time only)");
+function setSt(txt,cls='') {
+  const el=document.getElementById('fid-st');
+  el.textContent=txt;el.className='fid-status '+(cls?cls:'');
+}
+
+async function loadFIDModels() {
+  if(fidModelsLoaded) return true;
+  setSt("Loading AI models…");
   try {
+    // Load tiny for live preview, ssd+recognition for search
     await Promise.all([
-      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-      faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODELS),
+      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODELS),
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODELS),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODELS),
     ]);
-    fidLoaded=true; return true;
+    fidModelsLoaded=true;return true;
   } catch(e) {
-    setFidStatus("Failed to load AI models.",true); return false;
+    setSt("Failed to load models.",true);console.error(e);return false;
   }
 }
 
-function setFidStatus(txt, isErr=false) {
-  const el=document.getElementById('fid-status');
-  el.textContent=txt;
-  el.className=isErr?"err":(txt.includes("✓")||txt.includes("Found")?"found":"");
-}
-
-async function startFaceID() {
-  capturedDescriptor=null;
+async function startFID() {
+  capturedDesc=null;fidScanActive=false;
   document.getElementById('fid-badges').innerHTML="";
   document.getElementById('fid-results').innerHTML="";
-  document.getElementById('btn-do-search').style.display="none";
-  document.getElementById('scan-line').classList.remove('active');
-  setFidStatus("Loading AI models…");
-
-  const ok=await loadFaceModels();
-  if(!ok) return;
-  setFidStatus("Starting camera…");
-
+  document.getElementById('btn-search').style.display="none";
+  document.getElementById('scan-line').classList.remove('on');
+  setSt("Loading AI models…");
+  const ok=await loadFIDModels();if(!ok)return;
+  setSt("Starting camera…");
   try {
     fidStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false
+      // Use lower resolution for better performance
+      video:{facingMode:"user",width:{ideal:480},height:{ideal:360}},audio:false
     });
-  } catch { setFidStatus("Camera access denied.",true); return; }
-
-  const vid=document.getElementById('fid-vid');
-  // NOT mirrored — draw detection boxes in real orientation
-  vid.style.transform = "scaleX(1)";
-  vid.srcObject=fidStream;
-  await vid.play();
-  setFidStatus("Point your face at the camera…");
-  isFidScanning=true;
-  runFidLoop();
+  }catch{setSt("Camera access denied.",true);return;}
+  const fvid=document.getElementById('fid-vid');
+  fvid.style.transform="scaleX(1)"; // NOT mirrored
+  fvid.srcObject=fidStream;
+  await fvid.play();
+  fidScanActive=true;
+  setSt("Position your face in the frame…");
+  fidLoop();
 }
 
-async function runFidLoop() {
-  const vid=document.getElementById('fid-vid');
+function fidLoop() {
+  if(!fidScanActive) return;
+  const now=performance.now();
+  // Throttle: run detection every 500ms max
+  if(now-fidLastDetect>=500) {
+    fidLastDetect=now;
+    runLiveDetect();
+  }
+  fidDetectId=requestAnimationFrame(fidLoop);
+}
+
+async function runLiveDetect() {
+  const fvid=document.getElementById('fid-vid');
   const cvs=document.getElementById('fid-cvs');
   const wrap=cvs.parentElement;
-  cvs.width=wrap.offsetWidth; cvs.height=wrap.offsetHeight;
+  cvs.width=wrap.offsetWidth;cvs.height=wrap.offsetHeight;
   const ctx=cvs.getContext('2d');
 
-  const tick=async()=>{
-    if(!fidStream||!isFidScanning) return;
-    const dets=await faceapi
-      .detectAllFaces(vid,new faceapi.SsdMobilenetv1Options({minConfidence:.48}))
-      .withFaceLandmarks().withFaceExpressions().withAgeAndGender().withFaceDescriptors();
+  // Use TinyFaceDetector for speed
+  const dets=await faceapi
+    .detectAllFaces(fvid,new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.45}))
+    .withFaceLandmarks(true);
 
-    ctx.clearRect(0,0,cvs.width,cvs.height);
-    const sx=cvs.width/vid.videoWidth, sy=cvs.height/vid.videoHeight;
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  if(!dets.length){
+    setSt("No face detected — move closer…");
+    capturedDesc=null;
+    document.getElementById('btn-search').style.display="none";
+    document.getElementById('fid-badges').innerHTML="";
+    document.getElementById('scan-line').classList.remove('on');
+    return;
+  }
 
-    if(!dets.length) {
-      setFidStatus("No face detected — move closer…");
-      capturedDescriptor=null;
-      document.getElementById('btn-do-search').style.display="none";
-      document.getElementById('fid-badges').innerHTML="";
-      document.getElementById('scan-line').classList.remove('active');
-    } else {
-      // Draw in real (non-mirrored) space since video is not mirrored
-      dets.forEach(det=>{
-        const b=det.detection.box;
-        const bx=b.x*sx, by=b.y*sy, bw=b.width*sx, bh=b.height*sy;
-        ctx.strokeStyle="rgba(201,169,110,.85)"; ctx.lineWidth=1.5; ctx.strokeRect(bx,by,bw,bh);
-        const cs=13; ctx.strokeStyle=CSS_GOLD; ctx.lineWidth=2.6;
-        [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([cx,cy,dx,dy])=>{
-          ctx.beginPath(); ctx.moveTo(cx+dx*cs,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+dy*cs); ctx.stroke();
-        });
-        ctx.fillStyle="rgba(201,169,110,.45)";
-        det.landmarks.positions.forEach(p=>{
-          ctx.beginPath(); ctx.arc(p.x*sx,p.y*sy,1.2,0,Math.PI*2); ctx.fill();
-        });
-      });
+  const sx=cvs.width/fvid.videoWidth, sy=cvs.height/fvid.videoHeight;
+  // Draw WITHOUT mirror transform (video not mirrored)
+  dets.forEach(det=>{
+    const b=det.detection.box;
+    const bx=b.x*sx,by=b.y*sy,bw=b.width*sx,bh=b.height*sy;
+    ctx.strokeStyle="rgba(200,169,110,.8)";ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
+    const cs=12,G="#c8a96e";ctx.strokeStyle=G;ctx.lineWidth=2.5;
+    [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([cx,cy,dx,dy])=>{
+      ctx.beginPath();ctx.moveTo(cx+dx*cs,cy);ctx.lineTo(cx,cy);ctx.lineTo(cx,cy+dy*cs);ctx.stroke();
+    });
+    ctx.fillStyle="rgba(200,169,110,.4)";
+    det.landmarks.positions.forEach(p=>{ctx.beginPath();ctx.arc(p.x*sx,p.y*sy,1.1,0,Math.PI*2);ctx.fill();});
+  });
 
-      capturedDescriptor=dets[0].descriptor;
-      const g=dets[0].gender==="male"?"Male":"Female";
-      const age=Math.round(dets[0].age);
-      const EXP={happy:"Happy",sad:"Sad",angry:"Angry",fearful:"Fearful",disgusted:"Disgusted",surprised:"Surprised",neutral:"Neutral"};
-      const topExp=Object.entries(dets[0].expressions).sort((a,b)=>b[1]-a[1])[0];
-      document.getElementById('fid-badges').innerHTML=
-        `<div class="fid-badge"><b>${g}, ~${age} yrs</b><small>${EXP[topExp[0]]||topExp[0]}</small></div>`;
-      setFidStatus("Face captured ✓ — press Search My Photos");
-      document.getElementById('btn-do-search').style.display="block";
-      document.getElementById('scan-line').classList.add('active');
-    }
-    fidRaf=requestAnimationFrame(tick);
-  };
-  fidRaf=requestAnimationFrame(tick);
+  // Now get descriptor using full net (once face found)
+  // Only update descriptor if not yet captured (avoid re-running heavy net constantly)
+  if(!capturedDesc) {
+    // Run full detection with descriptor in background
+    faceapi.detectSingleFace(fvid,new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.45}))
+      .withFaceLandmarks(true)
+      .withFaceDescriptor()
+      .then(det=>{
+        if(det){
+          capturedDesc=det.descriptor;
+          document.getElementById('fid-badges').innerHTML=`<div class="fbadge"><b>Face captured ✓</b><small>Ready to search</small></div>`;
+          setSt("Face captured — press Search My Photos","ok");
+          document.getElementById('btn-search').style.display="block";
+          document.getElementById('scan-line').classList.add('on');
+        }
+      }).catch(()=>{});
+  }
 }
 
-const CSS_GOLD="#C9A96E";
+async function doSearch() {
+  if(!capturedDesc){setSt("Scan your face first.");return;}
+  if(!allPhotos.length){setSt("Gallery is empty.",true);return;}
 
-async function doFaceSearch() {
-  if(!capturedDescriptor){setFidStatus("Scan your face first.");return;}
-  if(!galleryData.length){setFidStatus("Gallery is empty.",true);return;}
-
-  setFidStatus(`Scanning ${galleryData.length} photos…`);
+  const btn=document.getElementById('btn-search');
+  btn.textContent="Searching…";btn.disabled=true;
   document.getElementById('fid-results').innerHTML="";
-  const btn=document.getElementById('btn-do-search');
-  btn.textContent="Searching…"; btn.disabled=true;
 
-  const THRESHOLD=0.52, matches=[];
-  for(let i=0;i<galleryData.length;i++){
-    setFidStatus(`Photo ${i+1} / ${galleryData.length}…`);
+  // Stop live loop while searching (saves resources)
+  fidScanActive=false;
+  cancelAnimationFrame(fidDetectId);
+
+  const THRESH=0.50,matches=[];
+  for(let i=0;i<allPhotos.length;i++){
+    setSt(`Checking photo ${i+1} of ${allPhotos.length}…`);
     try{
-      const img=await loadImg(galleryData[i].url);
-      const dets=await faceapi
-        .detectAllFaces(img,new faceapi.SsdMobilenetv1Options({minConfidence:.42}))
-        .withFaceLandmarks().withFaceDescriptors();
-      for(const d of dets){
-        const dist=faceapi.euclideanDistance(capturedDescriptor,d.descriptor);
-        if(dist<THRESHOLD){matches.push({url:galleryData[i].url,dist});break;}
+      const img=await loadImg(allPhotos[i].url);
+      // Use ssd for gallery search (more accurate)
+      const det=await faceapi
+        .detectSingleFace(img,new faceapi.SsdMobilenetv1Options({minConfidence:.4}))
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+      if(det){
+        const dist=faceapi.euclideanDistance(capturedDesc,det.descriptor);
+        if(dist<THRESH) matches.push({url:allPhotos[i].url,dist});
       }
     }catch{}
   }
 
-  btn.textContent="Search My Photos"; btn.disabled=false;
+  btn.textContent="Search My Photos";btn.disabled=false;
 
   if(!matches.length){
-    setFidStatus("No matching photos found.",true);
-    document.getElementById('fid-results').innerHTML=`<div class="fid-badge" style="width:100%;text-align:center"><small>No photos matched your face in the gallery</small></div>`;
+    setSt("No matching photos found.",true);
+    document.getElementById('fid-results').innerHTML=`<div class="fbadge" style="width:100%;text-align:center;padding:10px 0"><small>No matching photos in gallery</small></div>`;
     return;
   }
 
   matches.sort((a,b)=>a.dist-b.dist);
-  faceMatchUrls=matches.map(m=>m.url);
-  setFidStatus(`✓ Found ${matches.length} photo${matches.length>1?'s':''} of you!`);
+  // *** KEY FIX: store as array of {url} objects ***
+  faceMatches = matches.map(m=>({url:m.url}));
 
-  // Show in results list
+  setSt(`✓ Found ${matches.length} photo${matches.length>1?'s':''} of you!`,"ok");
   const res=document.getElementById('fid-results');
   res.innerHTML="";
   matches.forEach((m,i)=>{
     const pct=Math.round((1-m.dist)*100);
     const el=document.createElement('div');
-    el.className="fid-result-item";
-    el.innerHTML=`<img class="fid-result-img" src="${m.url}"><div class="fid-result-info"><p>Match #${i+1}</p><small>${pct}% confidence</small></div><span class="fid-result-badge">${pct}%</span>`;
-    el.onclick=()=>{ document.getElementById('single-img').src=m.url; closeFaceID(); goTo('pg-single'); };
+    el.className="fres";
+    el.innerHTML=`<img src="${m.url}"><div class="fres-info"><p>Match #${i+1}</p><small>${pct}% confidence</small></div><span class="fres-pct">${pct}%</span>`;
+    el.onclick=()=>{document.getElementById('single-img').src=m.url;closeFID();show('pg-single');};
     res.appendChild(el);
   });
 
-  // Update gallery face tab badge
-  const fc=document.getElementById('face-count');
-  fc.textContent=matches.length; fc.style.display="inline";
+  // Update face tab badge
+  const badge=document.getElementById('face-badge');
+  badge.textContent=matches.length;badge.style.display="inline";
 }
 
 function loadImg(url){
   return new Promise((res,rej)=>{
-    const img=new Image(); img.crossOrigin="anonymous";
-    img.onload=()=>res(img); img.onerror=rej;
-    img.src=url;
+    const img=new Image();img.crossOrigin="anonymous";
+    img.onload=()=>res(img);img.onerror=rej;img.src=url;
   });
 }
 
-function closeFaceID() {
-  isFidScanning=false;
-  cancelAnimationFrame(fidRaf); fidRaf=null;
+function closeFID() {
+  fidScanActive=false;
+  cancelAnimationFrame(fidDetectId);fidDetectId=null;
   if(fidStream){fidStream.getTracks().forEach(t=>t.stop());fidStream=null;}
-  const v=document.getElementById('fid-vid'); v.srcObject=null;
-  const c=document.getElementById('fid-cvs'); c.getContext('2d').clearRect(0,0,c.width,c.height);
-  document.getElementById('scan-line').classList.remove('active');
+  const v=document.getElementById('fid-vid');v.srcObject=null;
+  const c=document.getElementById('fid-cvs');c.getContext('2d').clearRect(0,0,c.width,c.height);
+  document.getElementById('scan-line').classList.remove('on');
   document.getElementById('fid-badges').innerHTML="";
   document.getElementById('fid-results').innerHTML="";
-  capturedDescriptor=null;
-  // Go to gallery — if we have matches, switch to faces tab
-  goTo('pg-gallery');
-  if(faceMatchUrls.length){
-    setTimeout(()=>switchTab('faces'),100);
-  }
+  capturedDesc=null;
+  show('pg-gallery');
+  // Auto-switch to faces tab if we found matches
+  if(faceMatches.length) setTimeout(()=>setTab('faces'),80);
 }
 
-/* ════ INIT ════ */
+/* ═══ INIT ═══ */
 window.addEventListener('DOMContentLoaded',()=>{
-  buildFilterStrip();
-  renderFlashBtn();
-  startCamera();
+  buildFilters();
+  renderFlash();
+  startCam();
 });
 </script>
 </body>
