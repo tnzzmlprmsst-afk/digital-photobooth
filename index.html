@@ -495,47 +495,59 @@ const SB = window.supabase.createClient(
   "https://plcrvnyfhczykdqrjhfs.supabase.co",
   "sb_publishable_vX_mEtYu3d9iq0CiUBuvyQ_r73lyg0B"
 );
-const MODELS = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights";
 const MAX = 20;
 
-/* ═══ FILTERS ═══ */
+/* ═══ FILTERS ═══
+   Each filter defines its look with plain numbers (sat/con/bri/hue/sep/gray).
+   These numbers are the single source of truth: they drive both the live
+   CSS preview (v/c, built below) and the manual pixel-filter used at
+   capture time (applyPixelFilter), so the captured photo always matches
+   exactly what was previewed — regardless of ctx.filter browser support. */
 const FILTERS = [
   {
     id:"none", name:"None",
-    v:"", c:"",
+    sat:1, con:1, bri:1, hue:0, sep:0, gray:0,
     grain:0, vig:0, chromab:null
   },
   {
     id:"dfun", name:"D-Fun",
-    v:"saturate(160%) contrast(115%) brightness(115%) hue-rotate(-10deg)",
-    c:"saturate(160%) contrast(115%) brightness(115%) hue-rotate(-10deg)",
+    sat:1.6, con:1.15, bri:1.15, hue:-10, sep:0, gray:0,
     grain:10, vig:.44, chromab:"rgba(255,50,30,0.07)"
   },
   {
     id:"instax", name:"Insta-X",
-    v:"contrast(86%) brightness(114%) saturate(72%) sepia(24%)",
-    c:"contrast(86%) brightness(114%) saturate(72%) sepia(24%)",
+    sat:.72, con:.86, bri:1.14, hue:0, sep:.24, gray:0,
     grain:6, vig:.26, chromab:null
   },
   {
     id:"vista400", name:"Vista 400",
-    v:"saturate(80%) contrast(108%) brightness(100%) hue-rotate(172deg) sepia(10%)",
-    c:"saturate(80%) contrast(108%) brightness(100%) hue-rotate(172deg) sepia(10%)",
+    sat:.80, con:1.08, bri:1.0, hue:172, sep:.10, gray:0,
     grain:13, vig:.34, chromab:"rgba(40,90,220,0.06)"
   },
   {
     id:"portra160", name:"Portra 160",
-    v:"contrast(90%) brightness(108%) saturate(85%) sepia(30%) hue-rotate(-5deg)",
-    c:"contrast(90%) brightness(108%) saturate(85%) sepia(30%) hue-rotate(-5deg)",
+    sat:.85, con:.90, bri:1.08, hue:-5, sep:.30, gray:0,
     grain:7, vig:.22, chromab:null
   },
   {
     id:"bwnoir", name:"BW Noir",
-    v:"grayscale(100%) contrast(142%) brightness(84%)",
-    c:"grayscale(100%) contrast(142%) brightness(84%)",
+    sat:1, con:1.42, bri:.84, hue:0, sep:0, gray:1,
     grain:20, vig:.58, chromab:null
   }
 ];
+// Build the CSS filter string (used only for the live preview) from the
+// same numeric values used by the pixel filter, so preview and capture stay in sync.
+FILTERS.forEach(f=>{
+  const parts=[];
+  if(f.gray)            parts.push(`grayscale(${Math.round(f.gray*100)}%)`);
+  if(f.sat!==1)         parts.push(`saturate(${Math.round(f.sat*100)}%)`);
+  if(f.con!==1)         parts.push(`contrast(${Math.round(f.con*100)}%)`);
+  if(f.bri!==1)         parts.push(`brightness(${Math.round(f.bri*100)}%)`);
+  if(f.hue)             parts.push(`hue-rotate(${f.hue}deg)`);
+  if(f.sep)             parts.push(`sepia(${Math.round(f.sep*100)}%)`);
+  const css=parts.join(' ');
+  f.v=css; f.c=css;
+});
 
 /* ═══ STATE ═══ */
 let stream=null, count=0, facing="user";
@@ -724,9 +736,16 @@ async function snap() {
   const ctx=cvs.getContext('2d');
   ctx.save();
   if(facing==="user"){ctx.translate(W,0);ctx.scale(-1,1);}
-  ctx.filter=f.c||"none";
+  // Draw the raw frame first — DO NOT rely on ctx.filter here.
+  // CSS filter on Canvas2D (ctx.filter) is unreliable on many Android
+  // WebViews/Chrome builds and silently no-ops, which produced photos
+  // that looked unfiltered ("original") even when a filter was selected.
   ctx.drawImage(vid,0,0,W,H);
   ctx.restore();
+  // Apply the filter manually via pixel manipulation instead — this works
+  // identically on every browser/device because it doesn't depend on
+  // Canvas2D filter support at all.
+  applyPixelFilter(ctx,W,H,f);
   if(f.grain>0) addGrain(ctx,W,H,f.grain);
   if(f.vig>0)   addVig(ctx,W,H,f.vig);
   if(f.chromab) addChromab(ctx,W,H,f.chromab);
@@ -738,6 +757,66 @@ async function snap() {
     const{error}=await SB.storage.from('galeri-foto').upload(name,blob,{contentType:'image/jpeg'});
     toast(error?"Upload failed":"Saved ✓",error?"err":"ok");
   },'image/jpeg',0.92);
+}
+
+/* Manual pixel-level filter engine — mirrors the look of each filter's
+   CSS string (saturate/contrast/brightness/hue-rotate/sepia/grayscale)
+   but works on every device, unlike ctx.filter. */
+function applyPixelFilter(ctx,w,h,f) {
+  if(!f || f.id==="none") return;
+  const d=ctx.getImageData(0,0,w,h), px=d.data;
+  const sat=f.sat!=null?f.sat:1;
+  const con=f.con!=null?f.con:1;
+  const bri=f.bri!=null?f.bri:1;
+  const hue=f.hue||0;
+  const sep=f.sep||0;
+  const gray=f.gray||0;
+  const hr=hue*Math.PI/180;
+  const cosA=Math.cos(hr), sinA=Math.sin(hr);
+  for(let i=0;i<px.length;i+=4){
+    let r=px[i],g=px[i+1],b=px[i+2];
+
+    // grayscale
+    if(gray>0){
+      const l=0.2126*r+0.7152*g+0.0722*b;
+      r=r+(l-r)*gray; g=g+(l-g)*gray; b=b+(l-b)*gray;
+    }
+
+    // sepia (blend toward sepia-mapped color)
+    if(sep>0){
+      const sr=Math.min(255,r*0.393+g*0.769+b*0.189);
+      const sg=Math.min(255,r*0.349+g*0.686+b*0.168);
+      const sb=Math.min(255,r*0.272+g*0.534+b*0.131);
+      r=r+(sr-r)*sep; g=g+(sg-g)*sep; b=b+(sb-b)*sep;
+    }
+
+    // hue-rotate (standard hue rotation matrix)
+    if(hue!==0){
+      const nr=(0.213+cosA*0.787-sinA*0.213)*r+(0.715-cosA*0.715-sinA*0.715)*g+(0.072-cosA*0.072+sinA*0.928)*b;
+      const ng=(0.213-cosA*0.213+sinA*0.143)*r+(0.715+cosA*0.285+sinA*0.140)*g+(0.072-cosA*0.072-sinA*0.283)*b;
+      const nb=(0.213-cosA*0.213-sinA*0.787)*r+(0.715-cosA*0.715+sinA*0.715)*g+(0.072+cosA*0.928+sinA*0.072)*b;
+      r=nr;g=ng;b=nb;
+    }
+
+    // saturate
+    if(sat!==1){
+      const l=0.2126*r+0.7152*g+0.0722*b;
+      r=l+(r-l)*sat; g=l+(g-l)*sat; b=l+(b-l)*sat;
+    }
+
+    // contrast (around mid-gray)
+    if(con!==1){
+      r=(r-128)*con+128; g=(g-128)*con+128; b=(b-128)*con+128;
+    }
+
+    // brightness
+    if(bri!==1){ r*=bri; g*=bri; b*=bri; }
+
+    px[i]=Math.max(0,Math.min(255,r));
+    px[i+1]=Math.max(0,Math.min(255,g));
+    px[i+2]=Math.max(0,Math.min(255,b));
+  }
+  ctx.putImageData(d,0,0);
 }
 
 function addGrain(ctx,w,h,amt) {
@@ -842,22 +921,49 @@ function setSt(txt,cls='') {
   el.textContent=txt;el.className='fid-status '+(cls?cls:'');
 }
 
+// Multiple model sources to try, in order — raw.githubusercontent.com can be
+// slow or rate-limited on mobile networks, which made face scan silently
+// fail to start on some Android devices. jsDelivr's GitHub mirror is a
+// faster, more reliable fallback CDN with the same model files.
+const MODEL_SOURCES = [
+  "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights",
+  "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights"
+];
+
+function withTimeout(promise,ms,label) {
+  return new Promise((resolve,reject)=>{
+    const t=setTimeout(()=>reject(new Error((label||"Operation")+" timed out")),ms);
+    promise.then(v=>{clearTimeout(t);resolve(v);},e=>{clearTimeout(t);reject(e);});
+  });
+}
+
 async function loadFIDModels() {
   if(fidModelsLoaded) return true;
   setSt("Loading AI models…");
-  try {
-    // Load tiny for live preview, ssd+recognition for search
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODELS),
-      faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODELS),
-      faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODELS),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODELS),
-    ]);
-    fidModelsLoaded=true;return true;
-  } catch(e) {
-    setSt("Failed to load models.",true);console.error(e);return false;
+  for(let s=0;s<MODEL_SOURCES.length;s++){
+    const SRC=MODEL_SOURCES[s];
+    try {
+      // Load tiny for live preview, ssd+recognition for search.
+      // Wrapped in a timeout so a stalled mobile connection fails fast
+      // and falls back to the next source instead of hanging forever.
+      await withTimeout(Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(SRC),
+        faceapi.nets.faceLandmark68TinyNet.loadFromUri(SRC),
+        faceapi.nets.ssdMobilenetv1.loadFromUri(SRC),
+        faceapi.nets.faceLandmark68Net.loadFromUri(SRC),
+        faceapi.nets.faceRecognitionNet.loadFromUri(SRC),
+      ]),15000,"Model loading");
+      fidModelsLoaded=true;return true;
+    } catch(e) {
+      console.error("Model load failed from",SRC,e);
+      if(s===MODEL_SOURCES.length-1){
+        setSt("Failed to load AI models. Check your connection and try again.",true);
+        return false;
+      }
+      setSt("Retrying with backup server…");
+    }
   }
+  return false;
 }
 
 async function startFID() {
@@ -865,14 +971,22 @@ async function startFID() {
   document.getElementById('fid-badges').innerHTML="";
   document.getElementById('fid-results').innerHTML="";
   document.getElementById('scan-line').classList.remove('on');
+
+  // Check camera API availability FIRST, before spending time loading AI
+  // models — getUserMedia is unavailable on non-HTTPS pages (except
+  // localhost) and inside many Android in-app browsers (WhatsApp,
+  // Instagram, etc.), which otherwise made the scan silently do nothing.
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    const insecure=location.protocol!=="https:" && location.hostname!=="localhost";
+    setSt(insecure
+      ? "Camera requires HTTPS. Open this page via https://, not http://."
+      : "Camera not supported here. Open this in Chrome or Safari, not an in-app browser.",true);
+    return;
+  }
+
   setSt("Loading AI models…");
   const ok=await loadFIDModels();if(!ok)return;
   setSt("Starting camera…");
-
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    setSt("Camera not supported. Open this in Chrome/Safari, not an in-app browser.",true);
-    return;
-  }
 
   // Build ordered list of constraint attempts (most specific first),
   // mirroring the resilience of startCam() so Android front cameras
