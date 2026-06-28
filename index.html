@@ -551,7 +551,7 @@ function show(id) {
 }
 
 function toCamera() {
-  count=0; document.getElementById('cnt').textContent='0';
+  document.getElementById('cnt').textContent=count;
   show('pg-cam'); startCam();
 }
 
@@ -611,8 +611,7 @@ const FLASH_MODES=["auto","on","off"];
 function cycleFlash() {
   flashMode = FLASH_MODES[(FLASH_MODES.indexOf(flashMode)+1)%3];
   renderFlash();
-  if(flashMode==="on" && facing==="environment") torchSet(true);
-  else torchSet(false);
+  // Flash mode only determines behavior at capture time — never stays on here
 }
 function renderFlash() {
   const btn=document.getElementById('btn-flash');
@@ -697,7 +696,7 @@ function pickFilter(i) {
   applyVF(i);
   updateVigOverlay(i);
   document.querySelectorAll('.fi').forEach((el,j)=>el.classList.toggle('sel',j===i));
-  setTimeout(()=>{fpOpen=false;document.getElementById('filter-panel').classList.remove('open');document.getElementById('btn-flt').classList.remove('open');},260);
+  // Panel stays open after picking — user closes it manually via the filter toggle button
 }
 
 function applyVF(i) { vid.style.filter=FILTERS[i].v||""; }
