@@ -278,8 +278,8 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   background:#0c0c0e;border:1px solid var(--b2);flex-shrink:0;
 }
 /* NOT mirrored */
-#fid-vid{width:100%;height:100%;object-fit:cover;display:block;transform:none}
-#fid-cvs{position:absolute;inset:0;width:100%;height:100%}
+#fid-vid{width:100%;height:100%;object-fit:cover;display:block;transform:none;-webkit-transform:none;z-index:1;position:relative}
+#fid-cvs{position:absolute;inset:0;width:100%;height:100%;z-index:2}
 
 @keyframes sl{0%{top:0}100%{top:100%}}
 #scan-line{
@@ -288,6 +288,19 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   animation:sl 2s linear infinite;z-index:4;opacity:.6;display:none;pointer-events:none;
 }
 #scan-line.on{display:block}
+
+/* Head guide overlay */
+#fid-guide{
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+}
+#fid-guide-svg{
+  width:100%;height:100%;
+  transition:opacity .3s;
+}
+#fid-guide.detected #fid-guide-svg ellipse:first-of-type{
+  stroke:rgba(52,199,89,0.9);
+}
 
 .fid-badge-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;width:100%;max-width:320px;flex-shrink:0}
 .fbadge{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:6px 11px;font-size:10px;color:var(--gold);font-weight:600;line-height:1.55}
@@ -436,6 +449,32 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   <div class="fid-cam">
     <video id="fid-vid" autoplay muted playsinline></video>
     <canvas id="fid-cvs"></canvas>
+    <!-- Head-shaped guide overlay -->
+    <div id="fid-guide">
+      <svg id="fid-guide-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <!-- Dimmed outer mask using clipPath trick -->
+        <defs>
+          <mask id="head-mask">
+            <rect width="200" height="240" fill="white"/>
+            <!-- Head oval -->
+            <ellipse cx="100" cy="95" rx="62" ry="72" fill="black"/>
+            <!-- Neck -->
+            <rect x="82" y="164" width="36" height="28" rx="4" fill="black"/>
+            <!-- Shoulders -->
+            <ellipse cx="100" cy="220" rx="76" ry="28" fill="black"/>
+          </mask>
+        </defs>
+        <!-- Dim everything outside the head shape -->
+        <rect width="200" height="240" fill="rgba(0,0,0,0.52)" mask="url(#head-mask)"/>
+        <!-- Glowing outline of the head shape -->
+        <ellipse cx="100" cy="95" rx="62" ry="72" fill="none" stroke="rgba(200,169,110,0.75)" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <rect x="82" y="164" width="36" height="28" rx="4" fill="none" stroke="rgba(200,169,110,0.4)" stroke-width="1" stroke-dasharray="4 4"/>
+        <ellipse cx="100" cy="220" rx="76" ry="28" fill="none" stroke="rgba(200,169,110,0.4)" stroke-width="1" stroke-dasharray="4 4"/>
+        <!-- Corner accent marks at head top -->
+        <line x1="100" y1="18" x2="100" y2="26" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="94" y1="22" x2="106" y2="22" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
     <div id="scan-line"></div>
   </div>
 
@@ -462,6 +501,11 @@ const MAX = 20;
 
 /* ═══ FILTERS ═══ */
 const FILTERS = [
+  {
+    id:"none", name:"None",
+    v:"", c:"",
+    grain:0, vig:0, chromab:null
+  },
   {
     id:"dfun", name:"D-Fun",
     v:"saturate(160%) contrast(115%) brightness(115%) hue-rotate(-10deg)",
@@ -525,16 +569,34 @@ let thumbRaf = null;
 
 async function startCam() {
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{exact:facing},width:{ideal:1280},height:{ideal:960}},audio:false
-    });
-  } catch {
-    try { stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false}); }
-    catch(e){console.error(e);return;}
+
+  // Build ordered list of constraints to try (most specific first)
+  const attempts = [];
+
+  // For back camera on Android: enumerate devices first (most reliable)
+  if(facing==="environment") {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const backCams = devices.filter(d=>d.kind==="videoinput"&&(/back|rear|environment/i.test(d.label)||d.label===""));
+      // Prefer last in list — usually the main back cam on Android
+      if(backCams.length>0){
+        const id=backCams[backCams.length-1].deviceId;
+        if(id) attempts.push({video:{deviceId:{exact:id}},audio:false});
+      }
+    }catch{}
   }
-  vid.srcObject = stream;
-  vid.style.transform = facing==="user"?"scaleX(-1)":"scaleX(1)";
+  attempts.push({video:{facingMode:{exact:facing},width:{ideal:1280},height:{ideal:960}},audio:false});
+  attempts.push({video:{facingMode:facing,width:{ideal:1280},height:{ideal:960}},audio:false});
+  attempts.push({video:{facingMode:facing},audio:false});
+
+  let ok=false;
+  for(const c of attempts){
+    try{stream=await navigator.mediaDevices.getUserMedia(c);ok=true;break;}catch{}
+  }
+  if(!ok){console.error("Camera failed");return;}
+
+  vid.srcObject=stream;
+  vid.style.transform=facing==="user"?"scaleX(-1)":"scaleX(1)";
   applyVF(fi);
   updateVigOverlay(fi);
   if(!thumbRaf) thumbRaf=requestAnimationFrame(drawThumbs);
@@ -566,8 +628,25 @@ function renderFlash() {
 async function torchSet(on) {
   if(!stream) return;
   const vt=stream.getVideoTracks()[0];
-  const cap=vt.getCapabilities?.()??{};
-  if(cap.torch) try{await vt.applyConstraints({advanced:[{torch:on}]});}catch{}
+  if(!vt) return;
+  // Try applyConstraints (works on Chrome Android)
+  try {
+    const cap=vt.getCapabilities ? vt.getCapabilities() : {};
+    if(cap.torch) {
+      await vt.applyConstraints({advanced:[{torch:on}]});
+      return;
+    }
+  } catch{}
+  // Fallback: ImageCapture API (some Android browsers)
+  try {
+    if(window.ImageCapture) {
+      const ic=new ImageCapture(vt);
+      const pc=await ic.getPhotoCapabilities();
+      if(pc.fillLightMode && pc.fillLightMode.includes(on?"flash":"off")) {
+        await ic.setOptions({fillLightMode:on?"flash":"off"});
+      }
+    }
+  } catch{}
 }
 
 /* ═══ FILTER PANEL ═══ */
@@ -799,7 +878,9 @@ async function startFID() {
     });
   }catch{setSt("Camera access denied.",true);return;}
   const fvid=document.getElementById('fid-vid');
-  fvid.style.transform="scaleX(1)"; // NOT mirrored
+  // Explicitly NOT mirrored — show real orientation
+  fvid.style.transform="scaleX(1)";
+  fvid.style.webkitTransform="scaleX(1)";
   fvid.srcObject=fidStream;
   await fvid.play();
   fidScanActive=true;
@@ -831,17 +912,20 @@ async function runLiveDetect() {
     .withFaceLandmarks(true);
 
   ctx.clearRect(0,0,cvs.width,cvs.height);
+  const guide=document.getElementById('fid-guide');
   if(!dets.length){
     setSt("No face detected — move closer…");
     capturedDesc=null;
     document.getElementById('btn-search').style.display="none";
     document.getElementById('fid-badges').innerHTML="";
     document.getElementById('scan-line').classList.remove('on');
+    guide.classList.remove('detected');
     return;
   }
 
+  guide.classList.add('detected');
   const sx=cvs.width/fvid.videoWidth, sy=cvs.height/fvid.videoHeight;
-  // Draw WITHOUT mirror transform (video not mirrored)
+  // Canvas is NOT mirrored — video is not mirrored — draw boxes directly
   dets.forEach(det=>{
     const b=det.detection.box;
     const bx=b.x*sx,by=b.y*sy,bw=b.width*sx,bh=b.height*sy;
@@ -947,6 +1031,7 @@ function closeFID() {
   document.getElementById('scan-line').classList.remove('on');
   document.getElementById('fid-badges').innerHTML="";
   document.getElementById('fid-results').innerHTML="";
+  document.getElementById('fid-guide').classList.remove('detected');
   capturedDesc=null;
   show('pg-gallery');
   // Auto-switch to faces tab if we found matches
